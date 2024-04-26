@@ -17,10 +17,6 @@ class EpicTestCase(TestCase):
             owner=contributor,
         )
 
-    def tearDown(self):
-        self.start_time = timezone.now()
-        self.epic.delete()
-
     def test_epic_properties(self):
         self.assertEqual(self.epic.title, "An epic test.")
         self.assertEqual(self.epic.description, "This is a test.")

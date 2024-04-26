@@ -4,11 +4,13 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
+from .exceptions import BadCommand
+
 
 class Contributor(models.Model):
     user = models.OneToOneField(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
     )
 
     @property
@@ -20,6 +22,63 @@ class Contributor(models.Model):
                 return f"{self.user.first_name}"
         else:
             return self.user.username
+
+    def new_epic(self, title, description):
+        return Epic.objects.create(
+            title=title,
+            description=description,
+            owner=self,
+        )
+
+    def new_story(self, epic, title, description):
+        if epic.owner != self:
+            raise BadCommand(f"{self} is not the owner")
+        return UserStory.objects.create(
+            title=title,
+            description=description,
+            epic=epic,
+        )
+
+    def take(self, story):
+        if story.status not in (StoryStatus.CREATED, StoryStatus.IN_PROGRESS):
+            raise BadCommand(f"Cannot assign {story}")
+        story.assigned_to = self
+        story.status = StoryStatus.IN_PROGRESS
+        story.save()
+
+    def suspend(self, story):
+        if story.status not in (StoryStatus.CREATED, StoryStatus.IN_PROGRESS):
+            raise BadCommand(f"Cannot suspend {story}")
+        if story.epic.owner != self:
+            raise BadCommand(f"{self} is not allowed to suspend {story}")
+        story.status = StoryStatus.SUSPENDED
+        story.save()
+
+    def cancel(self, story):
+        if story.status not in (
+                StoryStatus.CREATED,
+                StoryStatus.IN_PROGRESS,
+                StoryStatus.SUSPENDED,
+        ):
+            raise BadCommand(f"Cannot cancel {story}")
+        if story.epic.owner != self:
+            raise BadCommand(f"{self} is not allowed to cancel {story}")
+        story.status = StoryStatus.CANCELED
+        story.assigned_to = None
+        story.save()
+
+    def validate(self, story):
+        if story.status not in (
+                StoryStatus.CREATED,
+                StoryStatus.IN_PROGRESS,
+                StoryStatus.SUSPENDED,
+        ):
+            raise BadCommand(f"Cannot cancel {story}")
+        if story.epic.owner != self:
+            raise BadCommand(f"{self} is not allowed to cancel {story}")
+        story.status = StoryStatus.FINISHED
+        story.assigned_to = None
+        story.save()
 
     def __str__(self):
         return f"{self.fullname}"
@@ -60,6 +119,8 @@ class Epic(models.Model):
     owner = models.ForeignKey(
         Contributor,
         on_delete=models.PROTECT,
+        related_name="epics",
+        related_query_name="epic",
     )
 
     @property
@@ -95,6 +156,14 @@ class UserStory(models.Model):
         max_length=20,
         choices=StoryStatus,
         default=StoryStatus.CREATED,
+    )
+
+    assigned_to = models.ForeignKey(
+        Contributor,
+        on_delete=models.PROTECT,
+        null=True,
+        related_name="stories",
+        related_query_name="story",
     )
 
     def __str__(self):
