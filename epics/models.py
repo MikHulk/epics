@@ -54,6 +54,14 @@ class Contributor(models.Model):
         story.status = StoryStatus.SUSPENDED
         story.save()
 
+    @property
+    def suspended(self):
+        return self.stories.filter(status=StoryStatus.SUSPENDED)
+
+    @property
+    def in_progress(self):
+        return self.stories.filter(status=StoryStatus.IN_PROGRESS)
+
     def cancel(self, story):
         if story.status not in (
                 StoryStatus.CREATED,
@@ -165,6 +173,6 @@ class UserStory(models.Model):
         related_name="stories",
         related_query_name="story",
     )
-
+        
     def __str__(self):
         return f"{self.epic.title} -> {self.title}, {self.status}"
