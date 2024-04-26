@@ -1,16 +1,20 @@
+from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 
-from .models import Epic, UserStory, StoryStatus
+from .models import Contributor, Epic, UserStory, StoryStatus
 
 
 class EpicTestCase(TestCase):
 
     def setUp(self):
         self.start_time = timezone.now()
+        user = User.objects.create(username="test")
+        contributor = Contributor.objects.create(user=user)
         self.epic = Epic.objects.create(
             title="An epic test.",
             description="This is a test.",
+            owner=contributor,
         )
 
     def tearDown(self):

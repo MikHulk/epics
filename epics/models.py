@@ -1,7 +1,28 @@
 from dataclasses import dataclass
 
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+
+
+class Contributor(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+    )
+
+    @property
+    def fullname(self):
+        if self.user.first_name:
+            if self.user.last_name:
+                return f"{self.user.first_name} {self.user.last_name}"
+            else:
+                return f"{self.user.first_name}"
+        else:
+            return self.user.username
+
+    def __str__(self):
+        return f"{self.fullname}"
 
 
 @dataclass
@@ -35,6 +56,11 @@ class Epic(models.Model):
     title = models.CharField(max_length=256)
     pub_date = models.DateTimeField("date published", default=timezone.now)
     description = models.TextField()
+
+    owner = models.ForeignKey(
+        Contributor,
+        on_delete=models.PROTECT,
+    )
 
     @property
     def stats(self):
@@ -72,4 +98,4 @@ class UserStory(models.Model):
     )
 
     def __str__(self):
-        return f"US({self.pk}): {self.epic.title} -> {self.title}, {self.status}"
+        return f"{self.epic.title} -> {self.title}, {self.status}"
