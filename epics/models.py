@@ -46,6 +46,10 @@ class Contributor(models.Model):
         story.status = StoryStatus.IN_PROGRESS
         story.save()
 
+    @property
+    def in_progress(self):
+        return self.stories.filter(status=StoryStatus.IN_PROGRESS)
+
     def suspend(self, story):
         if story.status not in (StoryStatus.CREATED, StoryStatus.IN_PROGRESS):
             raise BadCommand(f"Cannot suspend {story}")
@@ -57,10 +61,6 @@ class Contributor(models.Model):
     @property
     def suspended(self):
         return self.stories.filter(status=StoryStatus.SUSPENDED)
-
-    @property
-    def in_progress(self):
-        return self.stories.filter(status=StoryStatus.IN_PROGRESS)
 
     def cancel(self, story):
         if story.status not in (
