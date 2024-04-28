@@ -61,8 +61,10 @@ class StatusChange(models.Model):
         return Stats(
             total_time=(
                 qs.aggregate(total=models.Sum("duration"))["total"]
-                + unfinished_stories_last_events.annotate(
-                    current_duration=time - models.F("time")
-                ).aggregate(total=models.Sum(models.F("current_duration")))["total"]
+                + (
+                    unfinished_stories_last_events
+                    .annotate(current_duration=time - models.F("time"))
+                    .aggregate(total=models.Sum(models.F("current_duration")))
+                )["total"]
             )
         )
