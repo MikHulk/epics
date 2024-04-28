@@ -22,7 +22,7 @@ class StatusChangeTestCase(TestCase):
             owner=self.product_owner,
         )
 
-    def test_new_us_triger_new_status_change_creation(self):
+    def test_new_us_triggers_new_status_change_creation(self):
         self.assertEqual(StatusChange.objects.count(), 0)
         self.product_owner.new_story(
             epic=self.epic,
@@ -43,7 +43,7 @@ class StatusChangeTestCase(TestCase):
             StoryStatus.CREATED,
         )
 
-    def test_take_us_triger_new_status_change_creation(self):
+    def test_take_us_triggers_new_status_change_creation(self):
         self.assertEqual(StatusChange.objects.count(), 0)
         us = self.product_owner.new_story(
             epic=self.epic,
@@ -65,7 +65,7 @@ class StatusChangeTestCase(TestCase):
             StoryStatus.IN_PROGRESS,
         )
 
-    def test_transfert_us_triger_new_status_change_creation(self):
+    def test_transfert_us_triggers_new_status_change_creation(self):
         self.assertEqual(StatusChange.objects.count(), 0)
         us = self.product_owner.new_story(
             epic=self.epic,
@@ -88,7 +88,7 @@ class StatusChangeTestCase(TestCase):
             StoryStatus.IN_PROGRESS,
         )
 
-    def test_cancel_us_triger_new_status_change_creation(self):
+    def test_cancel_us_triggers_new_status_change_creation(self):
         self.assertEqual(StatusChange.objects.count(), 0)
         us = self.product_owner.new_story(
             epic=self.epic,
@@ -112,7 +112,7 @@ class StatusChangeTestCase(TestCase):
             StoryStatus.CANCELED,
         )
 
-    def test_suspend_us_triger_new_status_change_creation(self):
+    def test_suspend_us_triggers_new_status_change_creation(self):
         self.assertEqual(StatusChange.objects.count(), 0)
         us = self.product_owner.new_story(
             epic=self.epic,
@@ -179,4 +179,28 @@ class StatusChangeTestCase(TestCase):
         self.assertEqual(
             new_status_change.new_status,
             StoryStatus.IN_PROGRESS,
+        )
+
+    def test_validate_us_triggers_new_status_change_creation(self):
+        self.assertEqual(StatusChange.objects.count(), 0)
+        us = self.product_owner.new_story(
+            epic=self.epic,
+            title="a new story",
+            description="a test story",
+        )
+        self.dev1.take(us)
+        self.dev2.take(us)
+        self.product_owner.validate(us)
+        self.assertEqual(
+            StatusChange.objects.count(),
+            4,
+        )
+        new_status_change = StatusChange.objects.order_by("-time").first()
+        self.assertEqual(
+            new_status_change.contributor,
+            self.product_owner,
+        )
+        self.assertEqual(
+            new_status_change.new_status,
+            StoryStatus.FINISHED,
         )
