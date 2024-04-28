@@ -9,7 +9,12 @@ from .models import StatusChange
 
 @transaction.atomic
 def record_new_status(sender, contributor, new_status, story, **kwargs):
-    last_change = StatusChange.objects.filter(story=story).order_by("-time").first()
+    last_change = (
+        StatusChange.objects
+        .filter(story=story)
+        .order_by("-time")
+        .first()
+    )
     StatusChange.objects.create(
         story=story,
         new_status=new_status,

@@ -46,12 +46,18 @@ class StatusChange(models.Model):
             .select_related("story__epic")
             .filter(story__epic=epic)
         )
-        unfinished_stories_events = qs.exclude(
-            story__status=StoryStatus.CANCELED
-        ).exclude(story__status=StoryStatus.FINISHED)
-        unfinished_stories_last_events = unfinished_stories_events.annotate(
-            last_event=models.Window(models.Max("time"), partition_by="story")
-        ).filter(time=models.F("last_event"))
+        unfinished_stories_events = (
+            qs.exclude(story__status=StoryStatus.CANCELED)
+            .exclude(story__status=StoryStatus.FINISHED)
+        )
+        unfinished_stories_last_events = (
+            unfinished_stories_events.annotate(
+                last_event=models.Window(
+                    models.Max("time"),
+                    partition_by="story"
+                ))
+            .filter(time=models.F("last_event"))
+        )
         return Stats(
             total_time=(
                 qs.aggregate(total=models.Sum("duration"))["total"]
