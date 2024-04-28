@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 
+from .signals import status_changed
 from .exceptions import BadCommand
 
 
@@ -33,11 +34,13 @@ class Contributor(models.Model):
     def new_story(self, epic, title, description):
         if epic.owner != self:
             raise BadCommand(f"{self} is not the owner")
-        return UserStory.objects.create(
+        story = UserStory.objects.create(
             title=title,
             description=description,
             epic=epic,
         )
+        story.status_changed(self)
+        return story
 
     def take(self, story):
         if story.status not in (StoryStatus.CREATED, StoryStatus.IN_PROGRESS):
@@ -45,6 +48,7 @@ class Contributor(models.Model):
         story.assigned_to = self
         story.status = StoryStatus.IN_PROGRESS
         story.save()
+        story.status_changed(self)
 
     @property
     def in_progress(self):
@@ -57,6 +61,8 @@ class Contributor(models.Model):
             raise BadCommand(f"{self} is not allowed to suspend {story}")
         story.status = StoryStatus.SUSPENDED
         story.save()
+        story.status_changed(self)
+
     def resume(self, story):
         if not story.status == StoryStatus.SUSPENDED:
             raise BadCommand(f"Cannot suspend {story}")
@@ -66,6 +72,7 @@ class Contributor(models.Model):
             story.assigned_to and StoryStatus.IN_PROGRESS or StoryStatus.CREATED
         )
         story.save()
+        story.status_changed(self)
 
     @property
     def suspended(self):
@@ -73,9 +80,9 @@ class Contributor(models.Model):
 
     def cancel(self, story):
         if story.status not in (
-                StoryStatus.CREATED,
-                StoryStatus.IN_PROGRESS,
-                StoryStatus.SUSPENDED,
+            StoryStatus.CREATED,
+            StoryStatus.IN_PROGRESS,
+            StoryStatus.SUSPENDED,
         ):
             raise BadCommand(f"Cannot cancel {story}")
         if story.epic.owner != self:
@@ -83,12 +90,13 @@ class Contributor(models.Model):
         story.status = StoryStatus.CANCELED
         story.assigned_to = None
         story.save()
+        story.status_changed(self)
 
     def validate(self, story):
         if story.status not in (
-                StoryStatus.CREATED,
-                StoryStatus.IN_PROGRESS,
-                StoryStatus.SUSPENDED,
+            StoryStatus.CREATED,
+            StoryStatus.IN_PROGRESS,
+            StoryStatus.SUSPENDED,
         ):
             raise BadCommand(f"Cannot cancel {story}")
         if story.epic.owner != self:
@@ -96,6 +104,7 @@ class Contributor(models.Model):
         story.status = StoryStatus.FINISHED
         story.assigned_to = None
         story.save()
+        story.status_changed(self)
 
     def __str__(self):
         return f"{self.fullname}"
@@ -182,6 +191,14 @@ class UserStory(models.Model):
         related_name="stories",
         related_query_name="story",
     )
-        
+
+    def status_changed(self, contributor=None):
+        status_changed.send(
+            sender=self.__class__,
+            contributor=contributor,
+            new_status=self.status,
+            story=self,
+        )
+
     def __str__(self):
         return f"{self.epic.title} -> {self.title}, {self.status}"
