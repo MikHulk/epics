@@ -183,7 +183,6 @@ class UserStory(models.Model):
         choices=StoryStatus,
         default=StoryStatus.CREATED,
     )
-
     assigned_to = models.ForeignKey(
         Contributor,
         on_delete=models.PROTECT,

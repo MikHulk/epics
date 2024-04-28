@@ -1,10 +1,12 @@
+from datetime import timedelta
+
 from django.contrib.auth.models import User
 from django.test import TestCase
 
 
 from epics.models import Epic, UserStory, StoryStatus, Contributor
 
-from .models import StatusChange
+from tracking.models import StatusChange
 
 
 class StatusChangeTestCase(TestCase):
@@ -40,7 +42,15 @@ class StatusChangeTestCase(TestCase):
         )
         self.assertEqual(
             new_status_change.new_status,
+            new_status_change.story.status,
+        )
+        self.assertEqual(
+            new_status_change.new_status,
             StoryStatus.CREATED,
+        )
+        self.assertEqual(
+            new_status_change.duration,
+            None,
         )
 
     def test_take_us_triggers_new_status_change_creation(self):
@@ -56,13 +66,22 @@ class StatusChangeTestCase(TestCase):
             2,
         )
         new_status_change = StatusChange.objects.order_by("-time").first()
+        previous_change = StatusChange.objects.order_by("-time")[1]
         self.assertEqual(
             new_status_change.contributor,
             self.dev1,
         )
         self.assertEqual(
             new_status_change.new_status,
+            new_status_change.story.status,
+        )
+        self.assertEqual(
+            new_status_change.new_status,
             StoryStatus.IN_PROGRESS,
+        )
+        self.assertGreater(
+            previous_change.duration,
+            timedelta(),
         )
 
     def test_transfert_us_triggers_new_status_change_creation(self):
@@ -79,13 +98,19 @@ class StatusChangeTestCase(TestCase):
             3,
         )
         new_status_change = StatusChange.objects.order_by("-time").first()
+        previous_change = StatusChange.objects.order_by("-time")[1]
         self.assertEqual(
             new_status_change.contributor,
             self.dev2,
         )
+        self.assertEqual(new_status_change.new_status, new_status_change.story.status)
         self.assertEqual(
             new_status_change.new_status,
             StoryStatus.IN_PROGRESS,
+        )
+        self.assertGreater(
+            previous_change.duration,
+            timedelta(),
         )
 
     def test_cancel_us_triggers_new_status_change_creation(self):
@@ -103,13 +128,19 @@ class StatusChangeTestCase(TestCase):
             4,
         )
         new_status_change = StatusChange.objects.order_by("-time").first()
+        previous_change = StatusChange.objects.order_by("-time")[1]
         self.assertEqual(
             new_status_change.contributor,
             self.product_owner,
         )
+        self.assertEqual(new_status_change.new_status, new_status_change.story.status)
         self.assertEqual(
             new_status_change.new_status,
             StoryStatus.CANCELED,
+        )
+        self.assertGreater(
+            previous_change.duration,
+            timedelta(),
         )
 
     def test_suspend_us_triggers_new_status_change_creation(self):
@@ -130,6 +161,7 @@ class StatusChangeTestCase(TestCase):
             new_status_change.contributor,
             self.product_owner,
         )
+        self.assertEqual(new_status_change.new_status, new_status_change.story.status)
         self.assertEqual(
             new_status_change.new_status,
             StoryStatus.SUSPENDED,
@@ -145,6 +177,7 @@ class StatusChangeTestCase(TestCase):
             new_status_change.contributor,
             self.product_owner,
         )
+        self.assertEqual(new_status_change.new_status, new_status_change.story.status)
         self.assertEqual(
             new_status_change.new_status,
             StoryStatus.CREATED,
@@ -161,6 +194,7 @@ class StatusChangeTestCase(TestCase):
             new_status_change.contributor,
             self.product_owner,
         )
+        self.assertEqual(new_status_change.new_status, new_status_change.story.status)
         self.assertEqual(
             new_status_change.new_status,
             StoryStatus.SUSPENDED,
@@ -172,13 +206,19 @@ class StatusChangeTestCase(TestCase):
             6,
         )
         new_status_change = StatusChange.objects.order_by("-time").first()
+        previous_change = StatusChange.objects.order_by("-time")[1]
         self.assertEqual(
             new_status_change.contributor,
             self.product_owner,
         )
+        self.assertEqual(new_status_change.new_status, new_status_change.story.status)
         self.assertEqual(
             new_status_change.new_status,
             StoryStatus.IN_PROGRESS,
+        )
+        self.assertGreater(
+            previous_change.duration,
+            timedelta(),
         )
 
     def test_validate_us_triggers_new_status_change_creation(self):
@@ -196,11 +236,17 @@ class StatusChangeTestCase(TestCase):
             4,
         )
         new_status_change = StatusChange.objects.order_by("-time").first()
+        previous_change = StatusChange.objects.order_by("-time")[1]
         self.assertEqual(
             new_status_change.contributor,
             self.product_owner,
         )
+        self.assertEqual(new_status_change.new_status, new_status_change.story.status)
         self.assertEqual(
             new_status_change.new_status,
             StoryStatus.FINISHED,
+        )
+        self.assertGreater(
+            previous_change.duration,
+            timedelta(),
         )
