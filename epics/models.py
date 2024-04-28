@@ -57,6 +57,15 @@ class Contributor(models.Model):
             raise BadCommand(f"{self} is not allowed to suspend {story}")
         story.status = StoryStatus.SUSPENDED
         story.save()
+    def resume(self, story):
+        if not story.status == StoryStatus.SUSPENDED:
+            raise BadCommand(f"Cannot suspend {story}")
+        if story.epic.owner != self:
+            raise BadCommand(f"{self} is not allowed to resume {story}")
+        story.status = (
+            story.assigned_to and StoryStatus.IN_PROGRESS or StoryStatus.CREATED
+        )
+        story.save()
 
     @property
     def suspended(self):

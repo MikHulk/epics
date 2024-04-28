@@ -201,6 +201,54 @@ class WorkflowTestCase(TestCase):
             self.dev1.suspend(us)
         self.assertEqual(us.status, StoryStatus.CREATED)
 
+    def test_owner_can_resume(self):
+        epic = self.product_owner.new_epic(
+            title="A new epic",
+            description="Build a django app.",
+        )
+        us = self.product_owner.new_story(
+            epic=epic,
+            title="Build the model",
+            description="A good app needs a good model.",
+        )
+        self.product_owner.suspend(us)
+        self.assertEqual(us.status, StoryStatus.SUSPENDED)
+        self.product_owner.resume(us)
+        self.assertEqual(us.status, StoryStatus.CREATED)
+
+    def test_owner_can_resume_in_progress_us(self):
+        epic = self.product_owner.new_epic(
+            title="A new epic",
+            description="Build a django app.",
+        )
+        us = self.product_owner.new_story(
+            epic=epic,
+            title="Build the model",
+            description="A good app needs a good model.",
+        )
+        self.dev1.take(us)
+        self.assertEqual(us.status, StoryStatus.IN_PROGRESS)
+        self.product_owner.suspend(us)
+        self.assertEqual(us.status, StoryStatus.SUSPENDED)
+        self.product_owner.resume(us)
+        self.assertEqual(us.status, StoryStatus.IN_PROGRESS)
+        self.assertEqual(us.assigned_to, self.dev1)
+
+    def test_only_owner_can_resume(self):
+        epic = self.product_owner.new_epic(
+            title="A new epic",
+            description="Build a django app.",
+        )
+        us = self.product_owner.new_story(
+            epic=epic,
+            title="Build the model",
+            description="A good app needs a good model.",
+        )
+        self.product_owner.suspend(us)
+        with self.assertRaises(BadCommand):
+            self.dev1.resume(us)
+        self.assertEqual(us.status, StoryStatus.SUSPENDED)
+
     def test_owner_can_cancel(self):
         epic = self.product_owner.new_epic(
             title="A new epic",

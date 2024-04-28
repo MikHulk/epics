@@ -6,8 +6,6 @@ from epics.models import Contributor, Epic, UserStory, StoryStatus
 from epics.exceptions import BadCommand
 
 
-
-
 class UsTestCase(TestCase):
 
     def setUp(self):
@@ -57,7 +55,6 @@ class UsTestCase(TestCase):
             epic=epic,
             status=StoryStatus.CREATED,
         )
-        
 
     def test_dev_see_assigned(self):
         self.assertEqual(
@@ -92,7 +89,6 @@ class UsTestCase(TestCase):
             self.dev2.stories.get(title="US 1")
         with self.assertRaises(UserStory.DoesNotExist):
             self.dev2.stories.get(title="US 5")
-        
 
     def test_dev_see_in_progress(self):
         self.assertEqual(
@@ -105,7 +101,7 @@ class UsTestCase(TestCase):
         )
         with self.assertRaises(UserStory.DoesNotExist):
             self.dev1.in_progress.get(title="US 3")
-            
+
         self.assertEqual(
             self.dev2.in_progress.count(),
             1,
@@ -116,7 +112,6 @@ class UsTestCase(TestCase):
         )
         with self.assertRaises(UserStory.DoesNotExist):
             self.dev2.in_progress.get(title="US 4")
-        
 
     def test_dev_see_suspended(self):
         self.assertEqual(
@@ -129,7 +124,7 @@ class UsTestCase(TestCase):
         )
         with self.assertRaises(UserStory.DoesNotExist):
             self.dev1.suspended.get(title="US 1")
-            
+
         self.assertEqual(
             self.dev2.suspended.count(),
             1,
