@@ -32,7 +32,7 @@ class StatusChange(models.Model):
         null=True,
     )
 
-    duration = models.DurationField(null=True)
+    duration = models.DurationField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.time.isoformat()}: {self.story} {self.new_status}"
