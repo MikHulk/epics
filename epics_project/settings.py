@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
     "epics.apps.EpicsConfig",
     "tracking.apps.TrackingConfig",
 ]
@@ -50,6 +51,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+LOGIN_REDIRECT_URL = '/contributors'
 
 ROOT_URLCONF = "epics_project.urls"
 
