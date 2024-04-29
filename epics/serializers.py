@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Contributor, Epic
+from .models import Contributor, Epic, UserStory
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -29,3 +29,10 @@ class EpicSerializer(serializers.HyperlinkedModelSerializer):
         model = Epic
         fields = ['id', 'url', 'pub_date', 'title', 'description', 'owner']
         read_only_fields = ['id', 'url', 'pub_date', 'owner']
+
+
+class UserStorySerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = UserStory
+        fields = ['id', 'pub_date', 'title', 'description', 'epic']
+        read_only_fields = ['id', 'pub_date', 'epic']

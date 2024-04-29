@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import Contributor, Epic
-from .serializers import ContributorSerializer, EpicSerializer
+from .serializers import ContributorSerializer, EpicSerializer, UserStorySerializer
 
 
 class ContributorViewSet(viewsets.ModelViewSet):
@@ -43,3 +43,25 @@ class EpicViewSet(viewsets.ReadOnlyModelViewSet):
     """
     queryset = Epic.objects.order_by('-pub_date')
     serializer_class = EpicSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @action(
+        detail=True,
+        methods=['post'],
+        name="create new story under this epic",
+        serializer_class=UserStorySerializer,
+    )
+    def new_story(self, request, pk=None):
+        epic = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            if epic.owner.user == request.user:
+                us = epic.owner.new_story(epic, **serializer.validated_data)
+                return Response(self.get_serializer(us).data)
+            else:
+                raise exceptions.PermissionDenied(
+                    detail="not your epic"
+                )
+        else:
+            return Response(serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
