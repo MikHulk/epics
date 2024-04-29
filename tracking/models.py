@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import timedelta
 
 from django.utils import timezone
 from django.db import models
@@ -10,6 +11,7 @@ from epics.models import UserStory, StoryStatus, Contributor
 @dataclass
 class Stats:
     total_time: int = 0
+    total_work_time: int = 0
 
 
 class StatusChange(models.Model):
@@ -42,8 +44,7 @@ class StatusChange(models.Model):
         if not time:
             time = timezone.now()
         qs = (
-            StatusChange.objects.select_related("story")
-            .select_related("story__epic")
+            StatusChange.objects
             .filter(story__epic=epic)
         )
         unfinished_stories_events = (
@@ -55,7 +56,8 @@ class StatusChange(models.Model):
                 last_event=models.Window(
                     models.Max("time"),
                     partition_by="story"
-                ))
+                )
+            )
             .filter(time=models.F("last_event"))
         )
         return Stats(
@@ -66,5 +68,48 @@ class StatusChange(models.Model):
                     .annotate(current_duration=time - models.F("time"))
                     .aggregate(total=models.Sum(models.F("current_duration")))
                 )["total"]
-            )
+            ),
+            total_work_time=(
+                qs.filter(new_status=StoryStatus.IN_PROGRESS)
+                .aggregate(total=models.Sum("duration"))
+            )["total"]
+        )
+
+    @staticmethod
+    def epic_contributor_time(epic, contributor):
+        return (
+            StatusChange.objects
+            .filter(story__epic=epic)
+            .filter(contributor=contributor)
+            .filter(new_status=StoryStatus.IN_PROGRESS)
+            .aggregate(total=models.Sum("duration"))
+        )["total"] or timedelta()
+
+    @staticmethod
+    def story_contributor_time(story, contributor):
+        return (
+            StatusChange.objects
+            .filter(story=story)
+            .filter(contributor=contributor)
+            .filter(new_status=StoryStatus.IN_PROGRESS)
+            .aggregate(total=models.Sum("duration"))
+        )["total"] or timedelta()
+
+    @staticmethod
+    def period_contributor_time(contributor, start_time, end_time):
+        return (
+            StatusChange.objects
+            .filter(time__gte=start_time)
+            .filter(time__lte=end_time)
+            .filter(contributor=contributor)
+            .filter(new_status=StoryStatus.IN_PROGRESS)
+            .aggregate(total=models.Sum("duration"))
+        )["total"] or timedelta()
+
+    @staticmethod
+    def story_timeline(story):
+        return (
+            StatusChange.objects
+            .select_related("story")
+            .select_related("story__epic")
         )
