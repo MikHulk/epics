@@ -52,7 +52,7 @@ class Contributor(models.Model):
         story.status_changed(self)
 
     @property
-    def in_progress(self):
+    def stories_in_progress(self):
         return self.stories.filter(status=StoryStatus.IN_PROGRESS)
 
     def suspend(self, story):
@@ -76,7 +76,7 @@ class Contributor(models.Model):
         story.status_changed(self)
 
     @property
-    def suspended(self):
+    def stories_suspended(self):
         return self.stories.filter(status=StoryStatus.SUSPENDED)
 
     def cancel(self, story):

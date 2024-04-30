@@ -10,14 +10,21 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['username', 'email', 'first_name', 'last_name', 'is_active']
 
 
-class ContributorSerializer(serializers.HyperlinkedModelSerializer):
+class LightContributorSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Contributor
-        fields = ['url', 'id', 'fullname', 'user', 'stories', 'epics']
-        read_only_fields = ['id', 'stories', 'epics']
+        fields = ['url', 'id', 'fullname', 'user']
 
     user = UserSerializer()
+
+
+class StatsSerializer(serializers.Serializer):
+    created = serializers.IntegerField()
+    in_progress = serializers.IntegerField()
+    suspended = serializers.IntegerField()
+    finished = serializers.IntegerField()
+    total = serializers.IntegerField()
 
 
 class EpicSerializer(serializers.HyperlinkedModelSerializer):
@@ -30,12 +37,54 @@ class EpicSerializer(serializers.HyperlinkedModelSerializer):
             'title',
             'description',
             'owner',
-            'stories']
-        read_only_fields = ['id', 'url', 'pub_date', 'owner', 'stories']
+            'stories',
+            'stats',
+        ]
+        read_only_fields = ['pub_date', 'stories']
+    owner = LightContributorSerializer(read_only=True)
+    stats = StatsSerializer()
 
 
 class UserStorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = UserStory
-        fields = ['id', 'pub_date', 'title', 'description', 'epic']
-        read_only_fields = ['id', 'pub_date', 'epic']
+        fields = [
+            'id',
+            'url',
+            'pub_date',
+            'title',
+            'description',
+            'epic',
+            'assigned_to',
+            'status',
+        ]
+        read_only_fields = [
+            'id',
+            'url',
+            'pub_date',
+            'epic',
+            'status',
+        ]
+
+    assigned_to = LightContributorSerializer(read_only=True)
+
+
+class ContributorSerializer(serializers.HyperlinkedModelSerializer):
+
+    class Meta:
+        model = Contributor
+        fields = [
+            'url',
+            'id',
+            'fullname',
+            'user',
+            'epics',
+            'stories',
+            'stories_in_progress',
+            'stories_suspended',
+        ]
+        read_only_fields = ['id', 'epics', 'stories']
+
+    user = UserSerializer()
+    stories_in_progress = UserStorySerializer(many=True)
+    stories_suspended = UserStorySerializer(many=True)

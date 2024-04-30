@@ -3,13 +3,14 @@ from rest_framework import permissions, viewsets, status, exceptions, serializer
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from .exceptions import BadCommand, APIBadCommand
 from .models import Contributor, Epic, UserStory
 from .serializers import ContributorSerializer, EpicSerializer, UserStorySerializer
 
 
 class ContributorViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    API endpoint that allows managing and performing action for contributor.
+    API endpoint that allows listing and performing action for contributor.
     """
     queryset = Contributor.objects.all().order_by('user__username')
     serializer_class = ContributorSerializer
@@ -39,7 +40,7 @@ class ContributorViewSet(viewsets.ReadOnlyModelViewSet):
 
 class EpicViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    Epics list view.
+    API endpoint that allows listing and performing action on epics.
     """
     queryset = Epic.objects.order_by('-pub_date')
     serializer_class = EpicSerializer
@@ -69,8 +70,108 @@ class EpicViewSet(viewsets.ReadOnlyModelViewSet):
 
 class UserStoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    Epics list view.
+    API endpoint that allows listing and performing action on user stories.
     """
     queryset = UserStory.objects.order_by('-pub_date')
     serializer_class = UserStorySerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    @action(
+        detail=True,
+        methods=['put'],
+        name="take this story",
+        serializer_class=serializers.Serializer,
+    )
+    def take(self, request, pk=None):
+        story = self.get_object()
+        contributor = request.user.contributor
+        try:
+            contributor.take(story)
+            return Response(
+                UserStorySerializer(
+                    instance=story,
+                    context={'request': request}
+                ).data
+            )
+        except BadCommand as e:
+            raise APIBadCommand(str(e))
+
+    @action(
+        detail=True,
+        methods=['put'],
+        name="suspend this story",
+        serializer_class=serializers.Serializer,
+    )
+    def suspend(self, request, pk=None):
+        story = self.get_object()
+        contributor = request.user.contributor
+        try:
+            contributor.suspend(story)
+            return Response(
+                UserStorySerializer(
+                    instance=story,
+                    context={'request': request}
+                ).data
+            )
+        except BadCommand as e:
+            raise APIBadCommand(str(e))
+
+    @action(
+        detail=True,
+        methods=['put'],
+        name="resume this story from suspended",
+        serializer_class=serializers.Serializer,
+    )
+    def resume(self, request, pk=None):
+        story = self.get_object()
+        contributor = request.user.contributor
+        try:
+            contributor.resume(story)
+            return Response(
+                UserStorySerializer(
+                    instance=story,
+                    context={'request': request}
+                ).data
+            )
+        except BadCommand as e:
+            raise APIBadCommand(str(e))
+
+    @action(
+        detail=True,
+        methods=['put'],
+        name="cancel this story (/!\\ this is final)",
+        serializer_class=serializers.Serializer,
+    )
+    def cancel(self, request, pk=None):
+        story = self.get_object()
+        contributor = request.user.contributor
+        try:
+            contributor.cancel(story)
+            return Response(
+                UserStorySerializer(
+                    instance=story,
+                    context={'request': request}
+                ).data
+            )
+        except BadCommand as e:
+            raise APIBadCommand(str(e))
+
+    @action(
+        detail=True,
+        methods=['put'],
+        name="validate this story",
+        serializer_class=serializers.Serializer,
+    )
+    def validate(self, request, pk=None):
+        story = self.get_object()
+        contributor = request.user.contributor
+        try:
+            contributor.validate(story)
+            return Response(
+                UserStorySerializer(
+                    instance=story,
+                    context={'request': request}
+                ).data
+            )
+        except BadCommand as e:
+            raise APIBadCommand(str(e))

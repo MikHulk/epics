@@ -92,46 +92,46 @@ class UsTestCase(TestCase):
 
     def test_dev_see_in_progress(self):
         self.assertEqual(
-            self.dev1.in_progress.count(),
+            self.dev1.stories_in_progress.count(),
             1,
         )
         self.assertEqual(
-            self.dev1.in_progress.get(title="US 1").title,
+            self.dev1.stories_in_progress.get(title="US 1").title,
             "US 1",
         )
         with self.assertRaises(UserStory.DoesNotExist):
-            self.dev1.in_progress.get(title="US 3")
+            self.dev1.stories_in_progress.get(title="US 3")
 
         self.assertEqual(
-            self.dev2.in_progress.count(),
+            self.dev2.stories_in_progress.count(),
             1,
         )
         self.assertEqual(
-            self.dev2.in_progress.get(title="US 2").title,
+            self.dev2.stories_in_progress.get(title="US 2").title,
             "US 2",
         )
         with self.assertRaises(UserStory.DoesNotExist):
-            self.dev2.in_progress.get(title="US 4")
+            self.dev2.stories_in_progress.get(title="US 4")
 
     def test_dev_see_suspended(self):
         self.assertEqual(
-            self.dev1.suspended.count(),
+            self.dev1.stories_suspended.count(),
             1,
         )
         self.assertEqual(
-            self.dev1.suspended.get(title="US 3").title,
+            self.dev1.stories_suspended.get(title="US 3").title,
             "US 3",
         )
         with self.assertRaises(UserStory.DoesNotExist):
-            self.dev1.suspended.get(title="US 1")
+            self.dev1.stories_suspended.get(title="US 1")
 
         self.assertEqual(
-            self.dev2.suspended.count(),
+            self.dev2.stories_suspended.count(),
             1,
         )
         self.assertEqual(
-            self.dev2.suspended.get(title="US 4").title,
+            self.dev2.stories_suspended.get(title="US 4").title,
             "US 4",
         )
         with self.assertRaises(UserStory.DoesNotExist):
-            self.dev2.suspended.get(title="US 2")
+            self.dev2.stories_suspended.get(title="US 2")
