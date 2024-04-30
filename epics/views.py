@@ -1,13 +1,13 @@
 from django.contrib.auth.models import User
-from rest_framework import permissions, viewsets, status, exceptions
+from rest_framework import permissions, viewsets, status, exceptions, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import Contributor, Epic
+from .models import Contributor, Epic, UserStory
 from .serializers import ContributorSerializer, EpicSerializer, UserStorySerializer
 
 
-class ContributorViewSet(viewsets.ModelViewSet):
+class ContributorViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows managing and performing action for contributor.
     """
@@ -65,3 +65,12 @@ class EpicViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return Response(serializer.errors,
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserStoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Epics list view.
+    """
+    queryset = UserStory.objects.order_by('-pub_date')
+    serializer_class = UserStorySerializer
+    permission_classes = [permissions.IsAuthenticated]

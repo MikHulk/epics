@@ -12,6 +12,7 @@ class Contributor(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.PROTECT,
+        related_name='contributor',
     )
 
     @property

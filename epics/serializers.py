@@ -14,21 +14,24 @@ class ContributorSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Contributor
-        fields = ['url', 'id', 'fullname', 'user']
+        fields = ['url', 'id', 'fullname', 'user', 'stories', 'epics']
+        read_only_fields = ['id', 'stories', 'epics']
 
     user = UserSerializer()
-
-    def create(self, validated_data):
-        user_data = validated_data.pop('user')
-        user = User.objects.create(**user_data)
-        return Contributor.objects.create(user=user)
 
 
 class EpicSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Epic
-        fields = ['id', 'url', 'pub_date', 'title', 'description', 'owner']
-        read_only_fields = ['id', 'url', 'pub_date', 'owner']
+        fields = [
+            'id',
+            'url',
+            'pub_date',
+            'title',
+            'description',
+            'owner',
+            'stories']
+        read_only_fields = ['id', 'url', 'pub_date', 'owner', 'stories']
 
 
 class UserStorySerializer(serializers.HyperlinkedModelSerializer):
