@@ -1,0 +1,12 @@
+<!-- main.html -->
+
+{% extends "base.html" %}
+{% load static %}
+{% load static landing_tags %}
+{% block head %}
+{% include_landing %}
+{% endblock %}
+{% block content %}
+<h1>Django + Elm = ❤️</h1>
+{% render_landing %}
+{% endblock %}
