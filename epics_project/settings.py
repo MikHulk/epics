@@ -54,6 +54,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+LOGIN_URL = '/api-auth/login'
 LOGIN_REDIRECT_URL = '/'
 
 ROOT_URLCONF = "epics_project.urls"

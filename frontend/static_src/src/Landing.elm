@@ -2,8 +2,8 @@ module Landing exposing (..)
 
 import Browser
 import Html exposing (Html, button, div, text)
-import Html.Events exposing (onClick)
 import Html.Attributes as HtmlA
+import Html.Events exposing (onClick)
 import Http
 import Json.Decode as D
 import Json.Encode exposing (Value)
@@ -16,34 +16,41 @@ type Msg
 
 type alias Model =
     { state : AppState
-    , loadingEpicListState : LoadingEpicListState
+    , epics : Maybe (List String)
+    , username : Maybe String
     }
 
 
-type LoadingEpicListState
-    = Failure
-    | Loading
-    | Success (List String)
-
-
 type AppState
-    = Ready ToModel
-    | Error
+    = Ready
+    | LoadingEpics
+    | Error String
 
 
 init : Value -> ( Model, Cmd Msg )
 init f =
     case D.decodeValue toModel f of
         Ok m ->
-            ( { state = Ready m, loadingEpicListState = Loading }
-            , Http.get
-                { url = "epics-api/epics/"
-                , expect = Http.expectJson GotEpics (D.list (D.field "title" D.string))
-                }
+            ( { state = LoadingEpics, epics = Nothing, username = m }
+            , case m of
+                Just _ ->
+                    Http.get
+                        { url = "epics-api/epics/"
+                        , expect =
+                            Http.expectJson
+                                GotEpics
+                                (D.list (D.field "title" D.string))
+                        }
+
+                _ ->
+                    Cmd.none
             )
 
         Err _ ->
-            ( { state = Error, loadingEpicListState = Failure }
+            ( { state = Error "Server error"
+              , epics = Nothing
+              , username = Nothing
+              }
             , Cmd.none
             )
 
@@ -67,45 +74,53 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotEpics (Ok epics) ->
-            ( { model | loadingEpicListState = Success epics }
+            ( { model | epics = Just epics, state = Ready }
             , Cmd.none
             )
+
         _ ->
             ( model, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
-    div [ HtmlA.id "main" ]
-        [ stateView model.state
-        , epicsView model.loadingEpicListState
-        ]
-
-epicsView : LoadingEpicListState -> Html Msg
-epicsView model =
-    case model of
-        Success (epics) ->
-            div [ HtmlA.id "epics-list"
-                , HtmlA.class "page-element"
+    div [ HtmlA.id "main" ] <|
+        case (model.state, model.epics) of
+            (LoadingEpics, _) ->
+                [ userView model.username
+                , text "load data, please wait"
                 ]
-                <| List.map (\url -> div [ HtmlA.class "epic-item"] [ text url ]) epics
-        _ -> text ""
+            (Ready, Just epics) ->
+                [ userView model.username
+                , epicsView epics
+                ]
+
+            _ ->
+                [ text "something went wrong" ]
 
 
-stateView : AppState -> Html Msg
-stateView model =
+epicsView : List String -> Html Msg
+epicsView epics =
+    div
+        [ HtmlA.id "epics-list"
+        , HtmlA.class "page-element"
+        ]
+    <|
+        List.map (\url -> div [ HtmlA.class "epic-item" ] [ text url ]) epics
+
+
+userView : Maybe String -> Html Msg
+userView model =
     case model of
-        Ready (Just username) ->
-            div [ HtmlA.id "welcome"
+        Just username ->
+            div
+                [ HtmlA.id "welcome"
                 , HtmlA.class "page-element"
                 ]
                 [ text <| "Hello " ++ username ++ "!"
                 ]
 
-        Ready Nothing ->
+        Nothing ->
             div []
                 [ text "not connected"
                 ]
-
-        _ ->
-            text "something went wrong"
