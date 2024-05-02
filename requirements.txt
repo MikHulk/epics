@@ -1,3 +1,4 @@
 django-filter==24.2
 djangorestframework==3.15.1
+djelm==0.10.0
 Markdown==3.6
