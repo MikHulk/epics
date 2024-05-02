@@ -1,0 +1,15 @@
+.page-element {
+  padding: 8px;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+#welcome {
+  background-color: #424d48;
+  font-size: larger;
+  border: solid 1px;
+}
+
+.epic-item {
+  margin-top: 0.7em;
+}

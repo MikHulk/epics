@@ -2,7 +2,6 @@ from django.shortcuts import render
 
 
 def landing_view(request):
-    print(request.user)
     context = {
         "username": (
             request.user.is_authenticated and

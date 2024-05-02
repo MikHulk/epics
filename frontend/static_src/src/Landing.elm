@@ -3,28 +3,49 @@ module Landing exposing (..)
 import Browser
 import Html exposing (Html, button, div, text)
 import Html.Events exposing (onClick)
-import Json.Decode exposing (decodeValue)
+import Html.Attributes as HtmlA
+import Http
+import Json.Decode as D
 import Json.Encode exposing (Value)
 import Models.Landing exposing (ToModel, toModel)
 
 
 type Msg
-    = Nop
+    = GotEpics (Result Http.Error (List String))
 
 
-type Model
+type alias Model =
+    { state : AppState
+    , loadingEpicListState : LoadingEpicListState
+    }
+
+
+type LoadingEpicListState
+    = Failure
+    | Loading
+    | Success (List String)
+
+
+type AppState
     = Ready ToModel
     | Error
 
 
 init : Value -> ( Model, Cmd Msg )
 init f =
-    case decodeValue toModel f of
+    case D.decodeValue toModel f of
         Ok m ->
-            ( Ready m, Cmd.none )
+            ( { state = Ready m, loadingEpicListState = Loading }
+            , Http.get
+                { url = "epics-api/epics/"
+                , expect = Http.expectJson GotEpics (D.list (D.field "title" D.string))
+                }
+            )
 
         Err _ ->
-            ( Error, Cmd.none )
+            ( { state = Error, loadingEpicListState = Failure }
+            , Cmd.none
+            )
 
 
 main : Program Value Model Msg
@@ -44,20 +65,47 @@ subscriptions _ =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        GotEpics (Ok epics) ->
+            ( { model | loadingEpicListState = Success epics }
+            , Cmd.none
+            )
+        _ ->
+            ( model, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
+    div [ HtmlA.id "main" ]
+        [ stateView model.state
+        , epicsView model.loadingEpicListState
+        ]
+
+epicsView : LoadingEpicListState -> Html Msg
+epicsView model =
     case model of
-        Ready ( Just username ) ->
-            div []
+        Success (epics) ->
+            div [ HtmlA.id "epics-list"
+                , HtmlA.class "page-element"
+                ]
+                <| List.map (\url -> div [ HtmlA.class "epic-item"] [ text url ]) epics
+        _ -> text ""
+
+
+stateView : AppState -> Html Msg
+stateView model =
+    case model of
+        Ready (Just username) ->
+            div [ HtmlA.id "welcome"
+                , HtmlA.class "page-element"
+                ]
                 [ text <| "Hello " ++ username ++ "!"
                 ]
+
         Ready Nothing ->
             div []
                 [ text "not connected"
                 ]
 
         _ ->
-            text "not ready"
+            text "something went wrong"

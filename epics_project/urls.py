@@ -7,6 +7,6 @@ from frontend import views
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", views.landing_view),
-    path("epics", include(epics.router.urls)),
+    path("epics-api/", include(epics.router.urls)),
     path('api-auth/', include('rest_framework.urls'))
 ]
