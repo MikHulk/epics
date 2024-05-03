@@ -107,6 +107,7 @@ epicsView epics =
     Html.div
         [ HtmlA.id "epics-list"
         , HtmlA.class "page-element"
+        , HtmlA.class "container"
         ]
     <|
         List.map
@@ -121,6 +122,7 @@ userView userOpt =
             Html.div
                 [ HtmlA.id "welcome"
                 , HtmlA.class "page-element"
+                , HtmlA.class "container"
                 ]
                 [ Html.h1 [] [ Html.text <| "Hello " ++ user.fullname ++ "!" ]
                 , Html.p []
@@ -151,7 +153,11 @@ userView userOpt =
                           , HtmlA.value user.csrfToken
                           ]
                           []
-                    , Html.button [ HtmlA.type_ "submit" ] [ Html.text "Log out" ]
+                    , Html.button
+                          [ HtmlA.type_ "submit"
+                          , HtmlA.class "logout-button"
+                          ]
+                          [ Html.text "Log out" ]
                     ]
                 ]
 

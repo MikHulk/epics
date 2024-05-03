@@ -2,6 +2,9 @@
   padding: 8px;
   margin-top: 1em;
   margin-bottom: 1em;
+}
+
+.container {
   background-color: #424d48;
   border: solid 2px;
   border-radius: 6px;
@@ -9,8 +12,31 @@
 
 #welcome {
   font-size: larger;
+  padding-bottom: 0.8em;
+}
+
+#welcome h1 {
+  font-size: 1.5em;
+  margin-top: 0.5em;
+}
+
+#welcome p {
+  font-size: 1em;
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
 }
 
 .epic-item {
   margin-top: 0.7em;
+}
+
+.logout-button {
+  background-color: hsl(204, 7.7%, 25.5%);
+  border: solid 2px;
+  color: lightcoral;
+  border-radius: 6px;
+  padding: 0.3em 2em;
+  margin-top: 0.5em;
+  font-size: 0.8em;
+  cursor: pointer;
 }
