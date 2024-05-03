@@ -1,7 +1,7 @@
 module Landing exposing (..)
 
 import Browser
-import Html exposing (Html, button, div, text)
+import Html exposing (Html)
 import Html.Attributes as HtmlA
 import Html.Events exposing (onClick)
 import Http
@@ -14,10 +14,14 @@ type Msg
     = GotEpics (Result Http.Error (List String))
 
 
+type alias UserInfo =
+    ToModel
+
+
 type alias Model =
     { state : AppState
     , epics : Maybe (List String)
-    , username : Maybe String
+    , user : Maybe UserInfo
     }
 
 
@@ -31,25 +35,23 @@ init : Value -> ( Model, Cmd Msg )
 init f =
     case D.decodeValue toModel f of
         Ok m ->
-            ( { state = LoadingEpics, epics = Nothing, username = m }
-            , case m of
-                Just _ ->
-                    Http.get
-                        { url = "epics-api/epics/"
-                        , expect =
-                            Http.expectJson
-                                GotEpics
-                                (D.list (D.field "title" D.string))
-                        }
-
-                _ ->
-                    Cmd.none
+            ( { state = LoadingEpics
+              , epics = Nothing
+              , user = Just m
+              }
+            , Http.get
+                { url = "epics-api/epics/"
+                , expect =
+                    Http.expectJson
+                        GotEpics
+                        (D.list (D.field "title" D.string))
+                }
             )
 
         Err _ ->
             ( { state = Error "Server error"
               , epics = Nothing
-              , username = Nothing
+              , user = Nothing
               }
             , Cmd.none
             )
@@ -84,43 +86,74 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div [ HtmlA.id "main" ] <|
-        case (model.state, model.epics) of
-            (LoadingEpics, _) ->
-                [ userView model.username
-                , text "load data, please wait"
+    Html.div [ HtmlA.id "main" ] <|
+        case ( model.state, model.epics ) of
+            ( LoadingEpics, _ ) ->
+                [ userView model.user
+                , Html.text "load data, please wait"
                 ]
-            (Ready, Just epics) ->
-                [ userView model.username
+
+            ( Ready, Just epics ) ->
+                [ userView model.user
                 , epicsView epics
                 ]
 
             _ ->
-                [ text "something went wrong" ]
+                [ Html.text "something went wrong" ]
 
 
 epicsView : List String -> Html Msg
 epicsView epics =
-    div
+    Html.div
         [ HtmlA.id "epics-list"
         , HtmlA.class "page-element"
         ]
     <|
-        List.map (\url -> div [ HtmlA.class "epic-item" ] [ text url ]) epics
+        List.map
+            (\url -> Html.div [ HtmlA.class "epic-item" ] [ Html.text url ])
+            epics
 
 
-userView : Maybe String -> Html Msg
-userView model =
-    case model of
-        Just username ->
-            div
+userView : Maybe UserInfo -> Html Msg
+userView userOpt =
+    case userOpt of
+        Just user ->
+            Html.div
                 [ HtmlA.id "welcome"
                 , HtmlA.class "page-element"
                 ]
-                [ text <| "Hello " ++ username ++ "!"
+                [ Html.h1 [] [ Html.text <| "Hello " ++ user.fullname ++ "!" ]
+                , Html.p []
+                    [ Html.text <|
+                        case user.email of
+                            Just address ->
+                                address
+
+                            _ ->
+                                "no email address"
+                    ]
+                , Html.p []
+                    [ Html.text <|
+                        (++) "Is staff: " <|
+                            if user.isStaff then
+                                "yes"
+
+                            else
+                                "no"
+                    ]
+                , Html.form
+                    [ HtmlA.action user.logoutUrl
+                    , HtmlA.method "post"
+                    ]
+                    [ Html.input
+                          [ HtmlA.type_ "hidden"
+                          , HtmlA.name "csrfmiddlewaretoken"
+                          , HtmlA.value user.csrfToken
+                          ]
+                          []
+                    , Html.button [ HtmlA.type_ "submit" ] [ Html.text "Log out" ]
+                    ]
                 ]
 
-        Nothing ->
-            div []
-                [ text "not connected"
-                ]
+        _ ->
+            Html.text "not connected"

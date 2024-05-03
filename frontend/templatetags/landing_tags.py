@@ -6,7 +6,10 @@ register = template.Library()
 
 @register.inclusion_tag("djelm/program.html", takes_context=True)
 def render_landing(context):
-    return {"key": key, "flags": LandingFlags.parse(context['username'])}
+    return {
+        "key": key,
+        "flags": LandingFlags.parse(context['user_info'])
+    }
 
 
 @register.inclusion_tag("djelm/include.html")

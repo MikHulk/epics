@@ -9,9 +9,23 @@ import Json.Decode.Pipeline exposing (required, optional, hardcoded)
 
 
 type alias ToModel =
-    Maybe String
+    { fullname : String
+    , firstName : Maybe String
+    , lastName : Maybe String
+    , email : Maybe String
+    , isStaff : Bool
+    , csrfToken : String
+    , logoutUrl : String
+    }
 
 
 toModel : Decode.Decoder ToModel
 toModel =
-    (Decode.nullable Decode.string)
+    Decode.succeed ToModel
+        |> required "fullname" Decode.string
+        |> required "firstName" (Decode.nullable Decode.string)
+        |> required "lastName" (Decode.nullable Decode.string)
+        |> required "email" (Decode.nullable Decode.string)
+        |> required "isStaff" Decode.bool
+        |> required "csrfToken" Decode.string
+        |> required "logoutUrl" Decode.string

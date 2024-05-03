@@ -55,6 +55,7 @@ MIDDLEWARE = [
 ]
 
 LOGIN_URL = '/api-auth/login'
+LOGOUT_URL = '/api-auth/logout'
 LOGIN_REDIRECT_URL = '/'
 
 ROOT_URLCONF = "epics_project.urls"
