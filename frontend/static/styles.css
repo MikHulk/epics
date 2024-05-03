@@ -10,6 +10,12 @@
   border-radius: 6px;
 }
 
+.error-msg {
+  background-color: #422c33;
+  border: solid 2px red;
+  border-radius: 6px;
+}
+
 #welcome {
   font-size: larger;
   padding-bottom: 0.8em;

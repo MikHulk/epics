@@ -80,8 +80,12 @@ update msg model =
             , Cmd.none
             )
 
-        _ ->
-            ( model, Cmd.none )
+        GotEpics (Err error) ->
+            ( { model | epics = Nothing
+              , state = Error <| "Error fetching epics: " ++ Debug.toString error
+              }
+            , Cmd.none
+            )
 
 
 view : Model -> Html Msg
@@ -98,8 +102,19 @@ view model =
                 , epicsView epics
                 ]
 
+            ( Error s, _ ) ->
+                [ Html.div
+                      [ HtmlA.class "error-msg"
+                      , HtmlA.class "page-element"]
+                      [ Html.text s ]
+                ]
+
             _ ->
-                [ Html.text "something went wrong" ]
+                [ Html.div
+                      [ HtmlA.class "error-msg"
+                      , HtmlA.class "page-element"]
+                      [ Html.text "Well... Something really bad happened.😱" ]
+                ]
 
 
 epicsView : List String -> Html Msg
@@ -148,16 +163,16 @@ userView userOpt =
                     , HtmlA.method "post"
                     ]
                     [ Html.input
-                          [ HtmlA.type_ "hidden"
-                          , HtmlA.name "csrfmiddlewaretoken"
-                          , HtmlA.value user.csrfToken
-                          ]
-                          []
+                        [ HtmlA.type_ "hidden"
+                        , HtmlA.name "csrfmiddlewaretoken"
+                        , HtmlA.value user.csrfToken
+                        ]
+                        []
                     , Html.button
-                          [ HtmlA.type_ "submit"
-                          , HtmlA.class "logout-button"
-                          ]
-                          [ Html.text "Log out" ]
+                        [ HtmlA.type_ "submit"
+                        , HtmlA.class "logout-button"
+                        ]
+                        [ Html.text "Log out" ]
                     ]
                 ]
 
