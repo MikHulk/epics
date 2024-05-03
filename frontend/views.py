@@ -2,9 +2,11 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.middleware.csrf import get_token
 from django.shortcuts import render, redirect
+from django.views.decorators.cache import cache_control
 
 
 @login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def landing_view(request):
     csrf_token = get_token(request)
     context = {
