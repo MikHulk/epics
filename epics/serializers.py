@@ -42,7 +42,7 @@ class EpicSerializer(serializers.HyperlinkedModelSerializer):
         ]
         read_only_fields = ['pub_date', 'stories']
     owner = LightContributorSerializer(read_only=True)
-    stats = StatsSerializer()
+    stats = StatsSerializer(read_only=True)
 
 
 class UserStorySerializer(serializers.HyperlinkedModelSerializer):
