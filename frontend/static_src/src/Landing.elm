@@ -5,35 +5,15 @@ import Html exposing (Html)
 import Html.Attributes as HtmlA
 import Html.Events exposing (onClick)
 import Http
-import Json.Decode as D
+import Json.Decode as JsonD
+import Json.Decode.Pipeline as JsonP
 import Json.Encode exposing (Value)
 import Models.Landing exposing (ToModel, toModel)
 
 
-type Msg
-    = GotEpics (Result Http.Error (List String))
-
-
-type alias UserInfo =
-    ToModel
-
-
-type alias Model =
-    { state : AppState
-    , epics : Maybe (List String)
-    , user : Maybe UserInfo
-    }
-
-
-type AppState
-    = Ready
-    | LoadingEpics
-    | Error String
-
-
 init : Value -> ( Model, Cmd Msg )
 init f =
-    case D.decodeValue toModel f of
+    case JsonD.decodeValue toModel f of
         Ok m ->
             ( { state = LoadingEpics
               , epics = Nothing
@@ -44,7 +24,7 @@ init f =
                 , expect =
                     Http.expectJson
                         GotEpics
-                        (D.list (D.field "title" D.string))
+                        (JsonD.list toEpic)
                 }
             )
 
@@ -67,9 +47,54 @@ main =
         }
 
 
+
+-- MSG
+
+
+type Msg
+    = GotEpics (Result Http.Error (List Epic))
+
+
+
+-- MODEL
+
+
+type alias UserInfo =
+    ToModel
+
+
+type alias Epic =
+    { title : String
+    , pubDate : String
+    , description : String
+    , ownerFullname : String
+    }
+
+
+type alias Model =
+    { state : AppState
+    , epics : Maybe (List Epic)
+    , user : Maybe UserInfo
+    }
+
+
+type AppState
+    = Ready
+    | LoadingEpics
+    | Error String
+
+
+
+-- SUBSCRIPTIONS
+
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
+
+
+
+-- UPDATE
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -81,16 +106,35 @@ update msg model =
             )
 
         GotEpics (Err error) ->
-            ( { model | epics = Nothing
-              , state = Error <| "Error fetching epics: " ++ Debug.toString error
+            ( { model
+                | epics = Nothing
+                , state = Error <| "Error fetching epics: " ++ Debug.toString error
               }
             , Cmd.none
             )
 
 
+
+-- DECODERS
+
+
+toEpic : JsonD.Decoder Epic
+toEpic =
+    JsonD.succeed Epic
+        |> JsonP.required "title" JsonD.string
+        |> JsonP.required "pub_date" JsonD.string
+        |> JsonP.required "description" JsonD.string
+        |> JsonP.required "owner"
+            (JsonD.field "fullname" JsonD.string)
+
+
+
+-- VIEW
+
+
 view : Model -> Html Msg
 view model =
-    Html.div [ HtmlA.id "main" ] <|
+    Html.main_ [ HtmlA.class "page-element" ] <|
         case ( model.state, model.epics ) of
             ( LoadingEpics, _ ) ->
                 [ userView model.user
@@ -104,30 +148,39 @@ view model =
 
             ( Error s, _ ) ->
                 [ Html.div
-                      [ HtmlA.class "error-msg"
-                      , HtmlA.class "page-element"]
-                      [ Html.text s ]
+                    [ HtmlA.class "error-msg"
+                    ]
+                    [ Html.text s ]
                 ]
 
             _ ->
                 [ Html.div
-                      [ HtmlA.class "error-msg"
-                      , HtmlA.class "page-element"]
-                      [ Html.text "Well... Something really bad happened.😱" ]
+                    [ HtmlA.class "error-msg"
+                    ]
+                    [ Html.text "Well... Something really bad happened.😱" ]
                 ]
 
 
-epicsView : List String -> Html Msg
+epicItem : Epic -> Html Msg
+epicItem epic =
+    Html.div [ HtmlA.class "epic-item" ]
+        [ Html.h1 [] [ Html.text epic.title ]
+        , Html.p [] [ Html.text epic.pubDate ]
+        , Html.p [] [ Html.text epic.ownerFullname ]
+        , Html.p
+              [ HtmlA.class "epic-description"]
+              [ Html.text epic.description ]
+        ]
+
+
+epicsView : List Epic -> Html Msg
 epicsView epics =
     Html.div
-        [ HtmlA.id "epics-list"
-        , HtmlA.class "page-element"
+        [ HtmlA.id "epic-list"
         , HtmlA.class "container"
         ]
     <|
-        List.map
-            (\url -> Html.div [ HtmlA.class "epic-item" ] [ Html.text url ])
-            epics
+        List.map epicItem epics
 
 
 userView : Maybe UserInfo -> Html Msg
@@ -136,7 +189,6 @@ userView userOpt =
         Just user ->
             Html.div
                 [ HtmlA.id "welcome"
-                , HtmlA.class "page-element"
                 , HtmlA.class "container"
                 ]
                 [ Html.h1 [] [ Html.text <| "Hello " ++ user.fullname ++ "!" ]
