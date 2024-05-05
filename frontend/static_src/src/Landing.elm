@@ -163,7 +163,10 @@ view model =
 
 epicItem : Epic -> Html Msg
 epicItem epic =
-    Html.div [ HtmlA.class "epic-item" ]
+    Html.div
+        [ HtmlA.class "epic-item"
+        , HtmlA.class "clickable"
+        ]
         [ Html.h1 [] [ Html.text epic.title ]
         , Html.p [] [ Html.text epic.pubDate ]
         , Html.p [] [ Html.text epic.ownerFullname ]
