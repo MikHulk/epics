@@ -15,6 +15,7 @@ LandingFlags = Flags(
     ObjectFlag(
         {
             "fullname": StringFlag(),
+            "name": StringFlag(),
             "firstName": NullableFlag(StringFlag()),
             "lastName": NullableFlag(StringFlag()),
             "email": NullableFlag(StringFlag()),

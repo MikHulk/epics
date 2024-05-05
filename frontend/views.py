@@ -12,6 +12,7 @@ def landing_view(request):
     context = {
         "user_info": {
             "fullname": request.user.contributor.fullname,
+            "name": request.user.username,
             "firstName": request.user.first_name or None,
             "lastName": request.user.last_name or None,
             "email": request.user.email or None,

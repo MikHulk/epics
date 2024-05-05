@@ -1,3 +1,16 @@
+/* Colors */
+
+.red {
+  color: lightcoral;
+}
+
+.blue {
+  color: steelblue;
+}
+
+
+/* tag */
+
 html, body {
   margin: 0;
   padding: 0;
@@ -30,6 +43,20 @@ footer {
   padding: 9px;
   flex:none;
 }
+
+button {
+  background-color: hsl(204, 7.7%, 25.5%);
+  border: solid 2px;
+  border-radius: 6px;
+  padding: 0.4em auto;
+  width: 7em;
+  margin-top: 0.5em;
+  font-size: 0.6em;
+  cursor: pointer;
+}
+
+
+/* others */
 
 .clickable {
   cursor: pointer;
@@ -89,6 +116,11 @@ footer {
   padding: 10px 9px;
 }
 
+#toolbar {
+  display: flex;
+  gap: 10px;
+}
+
 #welcome {
   font-size: larger;
   padding: 13px 7px;
@@ -104,15 +136,4 @@ footer {
 #welcome p {
   font-size: 0.7em;
   margin: 2px 0;
-}
-
-#welcome .logout-button {
-  background-color: hsl(204, 7.7%, 25.5%);
-  border: solid 2px;
-  color: lightcoral;
-  border-radius: 6px;
-  padding: 0.4em 2em;
-  margin-top: 0.5em;
-  font-size: 0.6em;
-  cursor: pointer;
 }
