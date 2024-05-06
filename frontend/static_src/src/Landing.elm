@@ -53,6 +53,7 @@ type Msg
     = GotEpics (Result Http.Error (List Epic))
     | UserWantsHisEpics
     | UserWantsAllEpics
+    | UserSearchForText String
 
 
 
@@ -83,6 +84,7 @@ type alias Model =
 type alias Epics =
     { epics : List Epic
     , userOnly : Maybe String
+    , textSearch : Maybe String
     }
 
 
@@ -111,7 +113,11 @@ update msg state =
         GotEpics (Ok epics) ->
             case state of
                 LoadingEpics model ->
-                    ( Ready model { epics = epics, userOnly = Nothing }
+                    ( Ready model
+                        { epics = epics
+                        , userOnly = Nothing
+                        , textSearch = Nothing
+                        }
                     , Cmd.none
                     )
 
@@ -142,6 +148,24 @@ update msg state =
             case state of
                 Ready model epics ->
                     ( Ready model { epics | userOnly = Nothing }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( state, Cmd.none )
+
+        UserSearchForText text ->
+            case state of
+                Ready model epics ->
+                    ( Ready model
+                        { epics
+                            | textSearch =
+                                if text == "" then
+                                    Nothing
+
+                                else
+                                    Just <| String.toLower text
+                        }
                     , Cmd.none
                     )
 
@@ -209,12 +233,26 @@ epicItem epic =
 epicsView : Epics -> Html Msg
 epicsView model =
     let
+        textFilter text epic =
+            (String.contains text <| String.toLower epic.description)
+                || (String.contains text <| String.toLower epic.title)
+
         epics =
-            case model.userOnly of
-                Just username ->
+            case ( model.userOnly, model.textSearch ) of
+                ( Just username, Just text ) ->
+                    List.filter
+                        (\epic ->
+                            epic.owner == username && (textFilter text epic)
+                        )
+                        model.epics
+
+                ( Just username, Nothing ) ->
                     List.filter
                         (\epic -> epic.owner == username)
                         model.epics
+
+                ( Nothing, Just text ) ->
+                    List.filter (textFilter text) model.epics
 
                 _ ->
                     model.epics
@@ -239,7 +277,11 @@ epicsView model =
     in
     Html.div
         [ HtmlA.id "epic-container", HtmlA.class "container" ]
-        [ Html.div [ HtmlA.class "container-toolbar" ] [ filterSwitch ]
+        [ Html.div
+              [ HtmlA.class "container-toolbar" ]
+              [ filterSwitch
+              , Html.input [ HtmlE.onInput UserSearchForText ] []
+              ]
         , Html.div
             [ HtmlA.id "epic-list"
             ]
