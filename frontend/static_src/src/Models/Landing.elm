@@ -9,25 +9,44 @@ import Json.Decode.Pipeline exposing (required, optional, hardcoded)
 
 
 type alias ToModel =
+    { userInfo : UserInfo_
+    , csrfToken : String
+    , logoutUrl : String
+    , epics : Epics_
+    }
+
+type alias UserInfo_ =
     { fullname : String
     , name : String
     , firstName : Maybe String
     , lastName : Maybe String
     , email : Maybe String
     , isStaff : Bool
-    , csrfToken : String
-    , logoutUrl : String
     }
+
+type alias Epics_ =
+    { url : String }
 
 
 toModel : Decode.Decoder ToModel
 toModel =
     Decode.succeed ToModel
+        |> required "userInfo" userInfo_Decoder
+        |> required "csrfToken" Decode.string
+        |> required "logoutUrl" Decode.string
+        |> required "epics" epics_Decoder
+
+userInfo_Decoder : Decode.Decoder UserInfo_
+userInfo_Decoder =
+    Decode.succeed UserInfo_
         |> required "fullname" Decode.string
         |> required "name" Decode.string
         |> required "firstName" (Decode.nullable Decode.string)
         |> required "lastName" (Decode.nullable Decode.string)
         |> required "email" (Decode.nullable Decode.string)
         |> required "isStaff" Decode.bool
-        |> required "csrfToken" Decode.string
-        |> required "logoutUrl" Decode.string
+
+epics_Decoder : Decode.Decoder Epics_
+epics_Decoder =
+    Decode.succeed Epics_
+        |> required "url" Decode.string

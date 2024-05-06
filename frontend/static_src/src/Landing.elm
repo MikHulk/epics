@@ -8,30 +8,24 @@ import Http
 import Json.Decode as JsonD
 import Json.Decode.Pipeline as JsonP
 import Json.Encode exposing (Value)
-import Models.Landing exposing (ToModel, toModel)
+import Models.Landing exposing (ToModel, UserInfo_, toModel)
 
 
-init : Value -> ( Model, Cmd Msg )
+init : Value -> ( AppState, Cmd Msg )
 init f =
     case JsonD.decodeValue toModel f of
         Ok m ->
-            ( { state = LoadingEpics
-              , epics = Nothing
-              , user = Just m
-              }
-            , getEpics
+            ( LoadingEpics <| Model m.userInfo m.csrfToken m.logoutUrl m.epics.url
+            , getEpics m.epics.url
             )
 
         Err _ ->
-            ( { state = Error "Server error"
-              , epics = Nothing
-              , user = Nothing
-              }
+            ( Error "Server error "
             , Cmd.none
             )
 
 
-main : Program Value Model Msg
+main : Program Value AppState Msg
 main =
     Browser.element
         { init = init
@@ -41,9 +35,9 @@ main =
         }
 
 
-getEpics =
+getEpics url =
     Http.get
-        { url = "epics-api/epics/"
+        { url = url
         , expect =
             Http.expectJson
                 GotEpics
@@ -66,7 +60,7 @@ type Msg
 
 
 type alias UserInfo =
-    ToModel
+    UserInfo_
 
 
 type alias Epic =
@@ -79,16 +73,17 @@ type alias Epic =
 
 
 type alias Model =
-    { state : AppState
-    , epics : Maybe (List Epic)
-    , user : Maybe UserInfo
+    { userInfo : UserInfo
+    , csrfToken : String
+    , logoutUrl : String
+    , epicUrl : String
     }
 
 
 type AppState
-    = Ready
-    | LoadingEpics
-    | ShowUserEpics
+    = LoadingEpics Model
+    | Ready Model (List Epic)
+    | ShowUserEpics Model (List Epic)
     | Error String
 
 
@@ -96,7 +91,7 @@ type AppState
 -- SUBSCRIPTIONS
 
 
-subscriptions : Model -> Sub Msg
+subscriptions : AppState -> Sub Msg
 subscriptions _ =
     Sub.none
 
@@ -105,48 +100,44 @@ subscriptions _ =
 -- UPDATE
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Msg -> AppState -> ( AppState, Cmd Msg )
+update msg state =
     case msg of
         GotEpics (Ok epics) ->
-            ( { model | epics = Just epics, state = Ready }
-            , Cmd.none
-            )
+            case state of
+                LoadingEpics model ->
+                    ( Ready model epics, Cmd.none )
+
+                _ ->
+                    ( state, Cmd.none )
 
         GotEpics (Err error) ->
-            ( { model
-                | epics = Nothing
-                , state = Error <| "Error fetching epics: " ++ Debug.toString error
-              }
+            ( Error <|
+                "Error fetching epics: "
+                    ++ Debug.toString error
             , Cmd.none
             )
 
         UserWantsHisEpics username ->
-            case model.epics of
-                Just epics ->
-                    ( { model
-                        | state = ShowUserEpics
-                        , epics =
-                            Just <|
-                                List.filter
-                                    (\epic -> epic.owner == username)
-                                    epics
-                      }
+            case state of
+                Ready model epics ->
+                    ( Ready model <|
+                        List.filter
+                            (\epic -> epic.owner == username)
+                            epics
                     , Cmd.none
                     )
-
-                Nothing ->
-                    ( model, Cmd.none )
-
-        UserWantsAllEpics ->
-            case model.user of
-                Just _ ->
-                    ( { model | state = LoadingEpics }, getEpics )
 
                 _ ->
-                    ( { model | state = Error "You are not connected" }
-                    , Cmd.none
-                    )
+                    ( state, Cmd.none )
+
+        UserWantsAllEpics ->
+            case state of
+                ShowUserEpics model _ ->
+                    ( LoadingEpics model, getEpics model.epicUrl )
+
+                _ ->
+                    ( state, Cmd.none )
 
 
 
@@ -169,39 +160,30 @@ toEpic =
 -- VIEW
 
 
-view : Model -> Html Msg
-view model =
-    let userView_ = userView model.state model.user
-    in
+view : AppState -> Html Msg
+view state =
     Html.main_ [ HtmlA.class "page-element" ] <|
-        case ( model.state, model.epics ) of
-            ( LoadingEpics, _ ) ->
-                [ userView_
+        case state of
+            LoadingEpics model ->
+                [ userView model
                 , Html.text "load data, please wait"
                 ]
 
-            ( Ready, Just epics ) ->
-                [ userView_
+            Ready model epics ->
+                [ userView model
                 , epicsView epics
                 ]
 
-            ( ShowUserEpics, Just epics ) ->
-                [ userView_
+            ShowUserEpics model epics ->
+                [ userView model
                 , epicsView epics
                 ]
 
-            ( Error s, _ ) ->
+            Error s ->
                 [ Html.div
                     [ HtmlA.class "error-msg"
                     ]
                     [ Html.text s ]
-                ]
-
-            _ ->
-                [ Html.div
-                    [ HtmlA.class "error-msg"
-                    ]
-                    [ Html.text "Well... Something really bad happened.😱" ]
                 ]
 
 
@@ -230,68 +212,52 @@ epicsView epics =
         List.map epicItem epics
 
 
-userView : AppState -> Maybe UserInfo -> Html Msg
-userView state userOpt =
-    case userOpt of
-        Just user ->
-            Html.div
-                [ HtmlA.id "welcome"
-                , HtmlA.class "container"
+userView : Model -> Html Msg
+userView model =
+    let
+        user =
+            model.userInfo
+    in
+    Html.div
+        [ HtmlA.id "welcome"
+        , HtmlA.class "container"
+        ]
+        [ Html.h1 [] [ Html.text <| "Hello " ++ user.fullname ++ "!" ]
+        , Html.p []
+            [ Html.text <|
+                case user.email of
+                    Just address ->
+                        address
+
+                    _ ->
+                        "no email address"
+            ]
+        , Html.p []
+            [ Html.text <|
+                (++) "Is staff: " <|
+                    if user.isStaff then
+                        "yes"
+
+                    else
+                        "no"
+            ]
+        , Html.div
+            [ HtmlA.id "toolbar" ]
+            [ Html.form
+                [ HtmlA.action model.logoutUrl
+                , HtmlA.method "post"
                 ]
-                [ Html.h1 [] [ Html.text <| "Hello " ++ user.fullname ++ "!" ]
-                , Html.p []
-                    [ Html.text <|
-                        case user.email of
-                            Just address ->
-                                address
-
-                            _ ->
-                                "no email address"
+                [ Html.input
+                    [ HtmlA.type_ "hidden"
+                    , HtmlA.name "csrfmiddlewaretoken"
+                    , HtmlA.value model.csrfToken
                     ]
-                , Html.p []
-                    [ Html.text <|
-                        (++) "Is staff: " <|
-                            if user.isStaff then
-                                "yes"
-
-                            else
-                                "no"
+                    []
+                , Html.button
+                    [ HtmlA.type_ "submit"
+                    , HtmlA.class "red"
                     ]
-                , Html.div
-                    [ HtmlA.id "toolbar" ]
-                    [ Html.form
-                        [ HtmlA.action user.logoutUrl
-                        , HtmlA.method "post"
-                        ]
-                        [ Html.input
-                            [ HtmlA.type_ "hidden"
-                            , HtmlA.name "csrfmiddlewaretoken"
-                            , HtmlA.value user.csrfToken
-                            ]
-                            []
-                        , Html.button
-                            [ HtmlA.type_ "submit"
-                            , HtmlA.class "red"
-                            ]
-                            [ Html.text "Log out" ]
-                        ]
-                    , case state of
-                        Ready ->
-                            Html.button
-                                [ HtmlA.class "blue"
-                                , HtmlE.onClick <| UserWantsHisEpics user.name
-                                ]
-                                [ Html.text "my epics" ]
-
-                        ShowUserEpics ->
-                            Html.button
-                                [ HtmlA.class "blue"
-                                , HtmlE.onClick UserWantsAllEpics
-                                ]
-                                [ Html.text "all epics" ]
-                        _ -> Html.text ""
-                    ]
+                    [ Html.text "Log out" ]
                 ]
-
-        _ ->
-            Html.text "not connected"
+            ]
+        ]

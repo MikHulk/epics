@@ -10,5 +10,8 @@ urlpatterns = [
     path("", views.landing_view),
     path("epics-api/", include(epics.router.urls)),
     path('api-auth/', include('rest_framework.urls')),
-    re_path(r'^favicon\.ico$', RedirectView.as_view(url='/static/favicon.ico')),
+    re_path(
+        r'^favicon\.ico$',
+        RedirectView.as_view(
+            url='/static/favicon.ico')),
 ]

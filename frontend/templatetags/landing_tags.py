@@ -8,7 +8,7 @@ register = template.Library()
 def render_landing(context):
     return {
         "key": key,
-        "flags": LandingFlags.parse(context['user_info'])
+        "flags": LandingFlags.parse(context['model'])
     }
 
 

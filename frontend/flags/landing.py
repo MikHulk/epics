@@ -14,14 +14,23 @@ key = "frontendlanding-djelm-Landing"
 LandingFlags = Flags(
     ObjectFlag(
         {
-            "fullname": StringFlag(),
-            "name": StringFlag(),
-            "firstName": NullableFlag(StringFlag()),
-            "lastName": NullableFlag(StringFlag()),
-            "email": NullableFlag(StringFlag()),
-            "isStaff": BoolFlag(),
+            "userInfo": ObjectFlag(
+                {
+                    "fullname": StringFlag(),
+                    "name": StringFlag(),
+                    "firstName": NullableFlag(StringFlag()),
+                    "lastName": NullableFlag(StringFlag()),
+                    "email": NullableFlag(StringFlag()),
+                    "isStaff": BoolFlag(),
+                }
+            ),
             "csrfToken": StringFlag(),
             "logoutUrl": StringFlag(),
+            "epics": ObjectFlag(
+                {
+                    "url": StringFlag(),
+                }
+            )
         }
     )
 )

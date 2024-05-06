@@ -2,7 +2,9 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.middleware.csrf import get_token
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.views.decorators.cache import cache_control
+from rest_framework.reverse import reverse
 
 
 @login_required
@@ -10,15 +12,18 @@ from django.views.decorators.cache import cache_control
 def landing_view(request):
     csrf_token = get_token(request)
     context = {
-        "user_info": {
-            "fullname": request.user.contributor.fullname,
-            "name": request.user.username,
-            "firstName": request.user.first_name or None,
-            "lastName": request.user.last_name or None,
-            "email": request.user.email or None,
-            "isStaff": request.user.is_staff,
+        "model": {
+            "userInfo": {
+                "fullname": request.user.contributor.fullname,
+                "name": request.user.username,
+                "firstName": request.user.first_name or None,
+                "lastName": request.user.last_name or None,
+                "email": request.user.email or None,
+                "isStaff": request.user.is_staff,
+            },
             "csrfToken": csrf_token,
-            "logoutUrl": f"{settings.LOGOUT_URL}/?next=/",
+            "logoutUrl": f"{reverse('rest_framework:logout')}?next=/",
+            "epics": {"url": reverse('epic-list')},
         }
     }
     return render(request, "main.html", context)
