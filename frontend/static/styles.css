@@ -8,6 +8,10 @@
   color: steelblue;
 }
 
+.green {
+  color: palegreen;
+}
+
 
 /* tag */
 
@@ -68,6 +72,13 @@ button {
   border-radius: 6px;
 }
 
+.container-toolbar {
+  padding: 3px 6px 6px;
+  background-color: #4a4857;
+  font-size: 1.2em;
+  border-bottom: solid 1px;
+}
+
 .epic-item .epic-description {
   max-height: 4em;
   display: -webkit-box;
@@ -90,9 +101,14 @@ button {
   margin: 2px 0;
 }
 
+#epic-container {
+  margin-top: 22px;
+  max-height: 100%;
+  overflow-y: hidden;
+}
+
 #epic-list {
   overflow-y: scroll;
-  margin-top: 22px;
   max-height: 100%;
 }
 

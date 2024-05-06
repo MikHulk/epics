@@ -51,7 +51,7 @@ getEpics url =
 
 type Msg
     = GotEpics (Result Http.Error (List Epic))
-    | UserWantsHisEpics String
+    | UserWantsHisEpics
     | UserWantsAllEpics
 
 
@@ -80,10 +80,15 @@ type alias Model =
     }
 
 
+type alias Epics =
+    { epics : List Epic
+    , userOnly : Maybe String
+    }
+
+
 type AppState
     = LoadingEpics Model
-    | Ready Model (List Epic)
-    | ShowUserEpics Model (List Epic)
+    | Ready Model Epics
     | Error String
 
 
@@ -106,7 +111,9 @@ update msg state =
         GotEpics (Ok epics) ->
             case state of
                 LoadingEpics model ->
-                    ( Ready model epics, Cmd.none )
+                    ( Ready model { epics = epics, userOnly = Nothing }
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( state, Cmd.none )
@@ -118,13 +125,13 @@ update msg state =
             , Cmd.none
             )
 
-        UserWantsHisEpics username ->
+        UserWantsHisEpics ->
             case state of
                 Ready model epics ->
-                    ( Ready model <|
-                        List.filter
-                            (\epic -> epic.owner == username)
-                            epics
+                    ( Ready model
+                        { epics
+                            | userOnly = Just model.userInfo.name
+                        }
                     , Cmd.none
                     )
 
@@ -133,8 +140,10 @@ update msg state =
 
         UserWantsAllEpics ->
             case state of
-                ShowUserEpics model _ ->
-                    ( LoadingEpics model, getEpics model.epicUrl )
+                Ready model epics ->
+                    ( Ready model { epics | userOnly = Nothing }
+                    , Cmd.none
+                    )
 
                 _ ->
                     ( state, Cmd.none )
@@ -174,11 +183,6 @@ view state =
                 , epicsView epics
                 ]
 
-            ShowUserEpics model epics ->
-                [ userView model
-                , epicsView epics
-                ]
-
             Error s ->
                 [ Html.div
                     [ HtmlA.class "error-msg"
@@ -202,14 +206,46 @@ epicItem epic =
         ]
 
 
-epicsView : List Epic -> Html Msg
-epicsView epics =
+epicsView : Epics -> Html Msg
+epicsView model =
+    let
+        epics =
+            case model.userOnly of
+                Just username ->
+                    List.filter
+                        (\epic -> epic.owner == username)
+                        model.epics
+
+                _ ->
+                    model.epics
+
+        filterSwitch =
+            case model.userOnly of
+                Just _ ->
+                    Html.button
+                        [ HtmlE.onClick UserWantsAllEpics
+                        , HtmlA.class "button"
+                        , HtmlA.class "blue"
+                        ]
+                        [ Html.text "All epics" ]
+
+                _ ->
+                    Html.button
+                        [ HtmlE.onClick UserWantsHisEpics
+                        , HtmlA.class "button"
+                        , HtmlA.class "green"
+                        ]
+                        [ Html.text "My epics" ]
+    in
     Html.div
-        [ HtmlA.id "epic-list"
-        , HtmlA.class "container"
+        [ HtmlA.id "epic-container", HtmlA.class "container" ]
+        [ Html.div [ HtmlA.class "container-toolbar" ] [ filterSwitch ]
+        , Html.div
+            [ HtmlA.id "epic-list"
+            ]
+          <|
+            List.map epicItem epics
         ]
-    <|
-        List.map epicItem epics
 
 
 userView : Model -> Html Msg
