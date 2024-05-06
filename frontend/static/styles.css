@@ -77,6 +77,8 @@ button {
   background-color: #4a4857;
   font-size: 1.2em;
   border-bottom: solid 1px;
+  gap: 11px;
+  display: flex;
 }
 
 .epic-item .epic-description {

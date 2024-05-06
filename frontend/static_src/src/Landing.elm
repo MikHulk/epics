@@ -280,7 +280,11 @@ epicsView model =
         [ Html.div
               [ HtmlA.class "container-toolbar" ]
               [ filterSwitch
-              , Html.input [ HtmlE.onInput UserSearchForText ] []
+              , Html.input
+                    [ HtmlE.onInput UserSearchForText
+                    , HtmlA.style "margin-top" "6px"
+                    ]
+                    []
               ]
         , Html.div
             [ HtmlA.id "epic-list"
