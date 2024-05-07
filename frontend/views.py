@@ -6,11 +6,21 @@ from django.urls import reverse
 from django.views.decorators.cache import cache_control
 from rest_framework.reverse import reverse
 
+from epics.models import Epic
+
 
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def landing_view(request):
     csrf_token = get_token(request)
+    epics = [
+        { "title": epic.title,
+          "pubDate": epic.pub_date.isoformat(),
+          "description": epic.description,
+          "ownerFullname": epic.owner.fullname,
+          "owner": epic.owner.user.username,
+         } for epic in Epic.objects.select_related("owner").select_related("owner__user")
+    ]
     context = {
         "model": {
             "userInfo": {
@@ -23,7 +33,7 @@ def landing_view(request):
             },
             "csrfToken": csrf_token,
             "logoutUrl": f"{reverse('rest_framework:logout')}?next=/",
-            "epics": {"url": reverse('epic-list')},
+            "epics": epics,
         }
     }
     return render(request, "main.html", context)

@@ -8,15 +8,17 @@ import Http
 import Json.Decode as JsonD
 import Json.Decode.Pipeline as JsonP
 import Json.Encode exposing (Value)
-import Models.Landing exposing (ToModel, UserInfo_, toModel)
+import Models.Landing exposing (Epics_, ToModel, UserInfo_, toModel)
 
 
 init : Value -> ( AppState, Cmd Msg )
 init f =
     case JsonD.decodeValue toModel f of
         Ok m ->
-            ( LoadingEpics <| Model m.userInfo m.csrfToken m.logoutUrl m.epics.url
-            , getEpics m.epics.url
+            ( Ready <|
+                Model m.userInfo m.csrfToken m.logoutUrl <|
+                    Epics m.epics Nothing Nothing
+            , Cmd.none
             )
 
         Err _ ->
@@ -35,23 +37,12 @@ main =
         }
 
 
-getEpics url =
-    Http.get
-        { url = url
-        , expect =
-            Http.expectJson
-                GotEpics
-                (JsonD.list toEpic)
-        }
-
-
 
 -- MSG
 
 
 type Msg
-    = GotEpics (Result Http.Error (List Epic))
-    | UserWantsHisEpics
+    = UserWantsHisEpics
     | UserWantsAllEpics
     | UserSearchForText String
 
@@ -65,19 +56,14 @@ type alias UserInfo =
 
 
 type alias Epic =
-    { title : String
-    , pubDate : String
-    , description : String
-    , ownerFullname : String
-    , owner : String
-    }
+    Epics_
 
 
 type alias Model =
     { userInfo : UserInfo
     , csrfToken : String
     , logoutUrl : String
-    , epicUrl : String
+    , epics : Epics
     }
 
 
@@ -89,8 +75,7 @@ type alias Epics =
 
 
 type AppState
-    = LoadingEpics Model
-    | Ready Model Epics
+    = Ready Model
     | Error String
 
 
@@ -110,33 +95,19 @@ subscriptions _ =
 update : Msg -> AppState -> ( AppState, Cmd Msg )
 update msg state =
     case msg of
-        GotEpics (Ok epics) ->
-            case state of
-                LoadingEpics model ->
-                    ( Ready model
-                        { epics = epics
-                        , userOnly = Nothing
-                        , textSearch = Nothing
-                        }
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( state, Cmd.none )
-
-        GotEpics (Err error) ->
-            ( Error <|
-                "Error fetching epics: "
-                    ++ Debug.toString error
-            , Cmd.none
-            )
-
         UserWantsHisEpics ->
             case state of
-                Ready model epics ->
-                    ( Ready model
-                        { epics
-                            | userOnly = Just model.userInfo.name
+                Ready model ->
+                    let
+                        epics =
+                            model.epics
+                    in
+                    ( Ready
+                        { model
+                            | epics =
+                                { epics
+                                    | userOnly = Just model.userInfo.name
+                                }
                         }
                     , Cmd.none
                     )
@@ -146,8 +117,12 @@ update msg state =
 
         UserWantsAllEpics ->
             case state of
-                Ready model epics ->
-                    ( Ready model { epics | userOnly = Nothing }
+                Ready model ->
+                    let
+                        epics =
+                            model.epics
+                    in
+                    ( Ready { model | epics = { epics | userOnly = Nothing } }
                     , Cmd.none
                     )
 
@@ -156,37 +131,28 @@ update msg state =
 
         UserSearchForText text ->
             case state of
-                Ready model epics ->
-                    ( Ready model
-                        { epics
-                            | textSearch =
-                                if text == "" then
-                                    Nothing
+                Ready model ->
+                    let
+                        epics =
+                            model.epics
+                    in
+                    ( Ready
+                        { model
+                            | epics =
+                                { epics
+                                    | textSearch =
+                                        if text == "" then
+                                            Nothing
 
-                                else
-                                    Just <| String.toLower text
+                                        else
+                                            Just <| String.toLower text
+                                }
                         }
                     , Cmd.none
                     )
 
                 _ ->
                     ( state, Cmd.none )
-
-
-
--- DECODERS
-
-
-toEpic : JsonD.Decoder Epic
-toEpic =
-    JsonD.succeed Epic
-        |> JsonP.required "title" JsonD.string
-        |> JsonP.required "pub_date" JsonD.string
-        |> JsonP.required "description" JsonD.string
-        |> JsonP.required "owner"
-            (JsonD.field "fullname" JsonD.string)
-        |> JsonP.required "owner"
-            (JsonD.field "user" (JsonD.field "username" JsonD.string))
 
 
 
@@ -197,14 +163,9 @@ view : AppState -> Html Msg
 view state =
     Html.main_ [ HtmlA.class "page-element" ] <|
         case state of
-            LoadingEpics model ->
+            Ready model ->
                 [ userView model
-                , Html.text "load data, please wait"
-                ]
-
-            Ready model epics ->
-                [ userView model
-                , epicsView epics
+                , epicsView model.epics
                 ]
 
             Error s ->
@@ -242,7 +203,7 @@ epicsView model =
                 ( Just username, Just text ) ->
                     List.filter
                         (\epic ->
-                            epic.owner == username && (textFilter text epic)
+                            epic.owner == username && textFilter text epic
                         )
                         model.epics
 
@@ -278,14 +239,14 @@ epicsView model =
     Html.div
         [ HtmlA.id "epic-container", HtmlA.class "container" ]
         [ Html.div
-              [ HtmlA.class "container-toolbar" ]
-              [ filterSwitch
-              , Html.input
-                    [ HtmlE.onInput UserSearchForText
-                    , HtmlA.style "margin-top" "6px"
-                    ]
-                    []
-              ]
+            [ HtmlA.class "container-toolbar" ]
+            [ filterSwitch
+            , Html.input
+                [ HtmlE.onInput UserSearchForText
+                , HtmlA.style "margin-top" "6px"
+                ]
+                []
+            ]
         , Html.div
             [ HtmlA.id "epic-list"
             ]

@@ -7,7 +7,14 @@ For the best developer experience ensure the following:
 - The key variable value "frontendlanding-djelmwidget-Landing" is not modified
 """
 
-from djelm.flags import Flags, NullableFlag, ObjectFlag, StringFlag, BoolFlag
+from djelm.flags import (
+    BoolFlag,
+    Flags,
+    ListFlag,
+    NullableFlag,
+    ObjectFlag,
+    StringFlag,
+)
 
 key = "frontendlanding-djelm-Landing"
 
@@ -26,10 +33,16 @@ LandingFlags = Flags(
             ),
             "csrfToken": StringFlag(),
             "logoutUrl": StringFlag(),
-            "epics": ObjectFlag(
-                {
-                    "url": StringFlag(),
-                }
+            "epics": ListFlag(
+                ObjectFlag(
+                    {
+                        "title": StringFlag(),
+                        "pubDate": StringFlag(),
+                        "description": StringFlag(),
+                        "ownerFullname": StringFlag(),
+                        "owner": StringFlag(),
+                    }
+                )
             )
         }
     )

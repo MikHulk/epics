@@ -12,7 +12,7 @@ type alias ToModel =
     { userInfo : UserInfo_
     , csrfToken : String
     , logoutUrl : String
-    , epics : Epics_
+    , epics : List Epics_
     }
 
 type alias UserInfo_ =
@@ -25,7 +25,12 @@ type alias UserInfo_ =
     }
 
 type alias Epics_ =
-    { url : String }
+    { title : String
+    , pubDate : String
+    , description : String
+    , ownerFullname : String
+    , owner : String
+    }
 
 
 toModel : Decode.Decoder ToModel
@@ -34,7 +39,7 @@ toModel =
         |> required "userInfo" userInfo_Decoder
         |> required "csrfToken" Decode.string
         |> required "logoutUrl" Decode.string
-        |> required "epics" epics_Decoder
+        |> required "epics" (Decode.list epics_Decoder)
 
 userInfo_Decoder : Decode.Decoder UserInfo_
 userInfo_Decoder =
@@ -49,4 +54,8 @@ userInfo_Decoder =
 epics_Decoder : Decode.Decoder Epics_
 epics_Decoder =
     Decode.succeed Epics_
-        |> required "url" Decode.string
+        |> required "title" Decode.string
+        |> required "pubDate" Decode.string
+        |> required "description" Decode.string
+        |> required "ownerFullname" Decode.string
+        |> required "owner" Decode.string
