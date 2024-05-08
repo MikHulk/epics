@@ -7,17 +7,26 @@ For the best developer experience ensure the following:
 - The key variable value "frontendepic-djelmwidget-Epic" is not modified
 """
 
-from djelm.flags import Flags, StringFlag, ObjectFlag
+from djelm.flags import Flags, ListFlag, StringFlag, ObjectFlag
 
 key = "frontendepic-djelm-Epic"
 
 EpicFlags = Flags(
      ObjectFlag(
          {
-            "title": StringFlag(),
-            "pubDate": StringFlag(),
-            "description": StringFlag(),
-            "ownerFullname": StringFlag(),
+             "title": StringFlag(),
+             "pubDate": StringFlag(),
+             "description": StringFlag(),
+             "ownerFullname": StringFlag(),
+             "stories": ListFlag(
+                 ObjectFlag(
+                     {
+                         "title": StringFlag(),
+                         "description": StringFlag(),
+                         "status": StringFlag(),
+                     }
+                 )
+             )
         }
      )
 )

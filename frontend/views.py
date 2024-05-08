@@ -14,7 +14,12 @@ from epics.models import Epic
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 def epic_view(request, epic_id):
     url =  f"{reverse('frontend:epic-detail', args=[epic_id])}"
-    epic = Epic.objects.get(pk=epic_id)
+    epic = (
+        Epic.objects
+        .select_related('owner')
+        .prefetch_related('stories')
+        .get(pk=epic_id)
+    )
     return render(
         request,
         "epic.html",
@@ -24,6 +29,13 @@ def epic_view(request, epic_id):
                 "pubDate": epic.pub_date.isoformat(),
                 "description": epic.description,
                 "ownerFullname": epic.owner.fullname,
+                "stories": [
+                    {
+                        "title": story.title,
+                        "description": story.description,
+                        "status": story.status,
+                    } for story in epic.stories.all()
+                ]
             }
         }
             

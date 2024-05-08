@@ -13,6 +13,13 @@ type alias ToModel =
     , pubDate : String
     , description : String
     , ownerFullname : String
+    , stories : List Stories_
+    }
+
+type alias Stories_ =
+    { title : String
+    , description : String
+    , status : String
     }
 
 
@@ -23,3 +30,11 @@ toModel =
         |> required "pubDate" Decode.string
         |> required "description" Decode.string
         |> required "ownerFullname" Decode.string
+        |> required "stories" (Decode.list stories_Decoder)
+
+stories_Decoder : Decode.Decoder Stories_
+stories_Decoder =
+    Decode.succeed Stories_
+        |> required "title" Decode.string
+        |> required "description" Decode.string
+        |> required "status" Decode.string
