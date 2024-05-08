@@ -2,6 +2,9 @@
 
 :root {
   --main-color: #d29595;
+  --green: palegreen;
+  --blue: #7aafdb;
+  --red: lightcoral;
 }
 
 .normal {
@@ -9,15 +12,15 @@
 }
 
 .red {
-  color: lightcoral;
+  color: var(--red);
 }
 
 .blue {
-  color: steelblue;
+  color: var(--blue);
 }
 
 .green {
-  color: palegreen;
+  color: var(--green);
 }
 
 
@@ -38,6 +41,7 @@ body {
   padding: 0 10px;
   display: flex;
   flex-direction: column;
+  gap: 6px;
   min-height: 100vh;
   height: 100vh;
   overflow-y: clip;
@@ -47,6 +51,7 @@ main {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 23px;
   min-height: 5vh;
 }
 
@@ -59,9 +64,7 @@ button {
   background-color: hsl(204, 7.7%, 25.5%);
   border: solid 2px;
   border-radius: 6px;
-  padding: 0.4em auto;
   width: 7em;
-  margin-top: 0.5em;
   font-size: 0.6em;
   cursor: pointer;
 }
@@ -74,21 +77,47 @@ button {
 }
 
 .container {
-  background-color: #3f444f;
+  background-color: #3F444F;
   border: solid 2px;
   border-radius: 6px;
 }
 
 .container-toolbar {
-  padding: 3px 7px 6px;
-  background-color: #4a4857;
+  padding: 6px 7px;
+  background-color: #4A4857;
   font-size: 1.2em;
   border-bottom: solid 1px;
   gap: 11px;
   display: flex;
 }
 
-.epic-item .epic-description {
+.error-msg {
+  background-color: #422C33;
+  border: solid 2px red;
+  border-radius: 6px;
+  margin: 0 1px;
+  padding: 10px 9px;
+}
+
+.head-container {
+  font-size: larger;
+  padding: 2px 8px 6px 8px;
+  flex: none;
+}
+
+.head-container h1 {
+  font-size: 1.1em;
+  margin: 0;
+  margin-bottom: 6px;
+  margin-top: 9px;
+}
+
+.head-container p {
+  font-size: 0.7em;
+  margin: 2px 0;
+}
+
+.list-item .item-description {
   max-height: 4em;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -96,71 +125,45 @@ button {
   overflow: hidden;
 }
 
-.epic-item {
+.list-item {
   font-size: 0.8em;
   padding: 10px 8px;
 }
 
-.epic-item h1 {
+.list-item h1 {
   font-size: 1.1em;
   margin-top: 0;
 }
 
-.epic-item p {
+.list-item p {
   margin: 2px 0;
 }
 
-#epic-container {
-  margin-top: 22px;
+.scrollable-container {
   max-height: 100%;
   overflow-y: hidden;
   display: flex;
   flex-direction: column;
 }
 
-#epic-list {
+.scrollable-list {
   overflow-y: scroll;
   max-height: 100%;
 }
 
-#epic-list div:not(:last-child) {
+.scrollable-list div:not(:last-child) {
   border-bottom: solid 1px;
 }
 
-#epic-list div:nth-child(odd) {
+.scrollable-list div:nth-child(odd) {
   background-color: #334246;
 }
 
-#epic-list div:nth-child(even) {
-  background-color: #46444f
+.scrollable-list div:nth-child(even) {
+  background-color: #46444F;
 }
 
-.error-msg {
-  background-color: #422c33;
-  border: solid 2px red;
-  border-radius: 6px;
-  margin: 0 1px;
-  padding: 10px 9px;
-}
-
-#toolbar {
+toolbar {
   display: flex;
   gap: 10px;
-}
-
-#welcome {
-  font-size: larger;
-  padding: 13px 7px;
-  flex: none;
-}
-
-#welcome h1 {
-  font-size: 1.1em;
-  margin: 0;
-  margin-bottom: 6px;
-}
-
-#welcome p {
-  font-size: 0.7em;
-  margin: 2px 0;
 }

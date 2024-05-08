@@ -166,7 +166,7 @@ update msg state =
 
 view : AppState -> Html Msg
 view state =
-    Html.main_ [ HtmlA.class "page-element" ] <|
+    Html.main_ [] <|
         case state of
             Ready model ->
                 [ userView model
@@ -184,7 +184,7 @@ view state =
 epicItem : Epic -> Html Msg
 epicItem epic =
     Html.div
-        [ HtmlA.class "epic-item"
+        [ HtmlA.class "list-item"
         , HtmlA.class "clickable"
         , HtmlE.onClick <| UserSelectEpic epic.url
         ]
@@ -192,7 +192,7 @@ epicItem epic =
         , Html.p [] [ Html.text epic.pubDate ]
         , Html.p [] [ Html.text epic.ownerFullname ]
         , Html.p
-            [ HtmlA.class "epic-description" ]
+            [ HtmlA.class "item-description" ]
             [ Html.text epic.description ]
         ]
 
@@ -243,18 +243,17 @@ epicsView model =
                         [ Html.text "My epics" ]
     in
     Html.div
-        [ HtmlA.id "epic-container", HtmlA.class "container" ]
+        [ HtmlA.class "scrollable-container", HtmlA.class "container" ]
         [ Html.div
             [ HtmlA.class "container-toolbar" ]
             [ filterSwitch
             , Html.input
                 [ HtmlE.onInput UserSearchForText
-                , HtmlA.style "margin-top" "6px"
                 ]
                 []
             ]
         , Html.div
-            [ HtmlA.id "epic-list"
+            [ HtmlA.class "scrollable-list"
             ]
           <|
             List.map epicItem epics
@@ -268,8 +267,8 @@ userView model =
             model.userInfo
     in
     Html.div
-        [ HtmlA.id "welcome"
-        , HtmlA.class "container"
+        [ HtmlA.class "container"
+        , HtmlA.class "head-container"
         ]
         [ Html.h1 [] [ Html.text <| "Hello " ++ user.fullname ++ "!" ]
         , Html.p []
@@ -291,7 +290,7 @@ userView model =
                         "no"
             ]
         , Html.div
-            [ HtmlA.id "toolbar" ]
+            [ HtmlA.class "toolbar" ]
             [ Html.form
                 [ HtmlA.action model.logoutUrl
                 , HtmlA.method "post"

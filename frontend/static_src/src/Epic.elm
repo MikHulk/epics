@@ -63,11 +63,12 @@ view : Model -> Html.Html Msg
 view model =
     case model of
         Ready epic ->
-            Html.div
+            Html.main_
                 []
                 [ Html.div
-                    [ HtmlA.class "container"
+                    [ HtmlA.class "head-container"
                     , HtmlA.class "toolbar"
+                    , HtmlA.class "container"
                     ]
                     [ Html.button
                         [ HtmlA.class "button"
@@ -78,7 +79,7 @@ view model =
                     ]
                 , Html.div
                     [ HtmlA.class "container"
-                    , HtmlA.class "epic-item"
+                    , HtmlA.class "list-item"
                     ]
                     [ Html.h1 [] [ Html.text epic.title ]
                     , Html.p []
@@ -101,13 +102,13 @@ storiesView : List Story -> Html.Html Msg
 storiesView stories =
     Html.div
         [ HtmlA.class "container"
-        , HtmlA.class "epic-list"
+        , HtmlA.class "scrollable-list"
         ]
     <|
         List.map
             (\story ->
                 Html.div
-                    [ HtmlA.class "epic-item" ]
+                    [ HtmlA.class "list-item" ]
                     [ Html.h1 [] [ Html.text story.title ]
                     , Html.p [] [ Html.text story.status ]
                     , Html.p [] [ Html.text story.description ]
