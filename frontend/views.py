@@ -4,9 +4,30 @@ from django.middleware.csrf import get_token
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.decorators.cache import cache_control
-from rest_framework.reverse import reverse
+
+from django.http import HttpResponse
 
 from epics.models import Epic
+
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def epic_view(request, epic_id):
+    url =  f"{reverse('frontend:epic-detail', args=[epic_id])}"
+    epic = Epic.objects.get(pk=epic_id)
+    return render(
+        request,
+        "epic.html",
+        {
+            "model": {
+                "title": epic.title,
+                "pubDate": epic.pub_date.isoformat(),
+                "description": epic.description,
+                "ownerFullname": epic.owner.fullname,
+            }
+        }
+            
+    )
 
 
 @login_required
@@ -19,6 +40,7 @@ def landing_view(request):
           "description": epic.description,
           "ownerFullname": epic.owner.fullname,
           "owner": epic.owner.user.username,
+          "url": reverse('frontend:epic-detail', args=[epic.pk]),
          } for epic in Epic.objects.select_related("owner").select_related("owner__user")
     ]
     context = {

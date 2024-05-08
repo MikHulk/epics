@@ -1,5 +1,13 @@
 /* Colors */
 
+:root {
+  --main-color: #d29595;
+}
+
+.normal {
+  color: var(--main-color);
+}
+
 .red {
   color: lightcoral;
 }
@@ -18,6 +26,7 @@
 html, body {
   margin: 0;
   padding: 0;
+  color: var(--main-color);
 }
 
 header {

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% load static %}
+{% load static epic_tags %}
+{% block head %}
+{% include_epic %}
+{% endblock %}
+{% block content %}
+<header class="page-element">
+  <h1>The Epic App 😈</h1>
+</header>
+{% render_epic %}
+<footer class="page-element">Django + Elm = 🩵</footer>
+{% endblock %}

@@ -1,6 +1,7 @@
 module Landing exposing (..)
 
 import Browser
+import Browser.Navigation as Nav
 import Html exposing (Html)
 import Html.Attributes as HtmlA
 import Html.Events as HtmlE
@@ -45,6 +46,7 @@ type Msg
     = UserWantsHisEpics
     | UserWantsAllEpics
     | UserSearchForText String
+    | UserSelectEpic String
 
 
 
@@ -154,6 +156,9 @@ update msg state =
                 _ ->
                     ( state, Cmd.none )
 
+        UserSelectEpic url ->
+            ( state, Nav.load url )
+
 
 
 -- VIEW
@@ -181,6 +186,7 @@ epicItem epic =
     Html.div
         [ HtmlA.class "epic-item"
         , HtmlA.class "clickable"
+        , HtmlE.onClick <| UserSelectEpic epic.url
         ]
         [ Html.h1 [] [ Html.text epic.title ]
         , Html.p [] [ Html.text epic.pubDate ]

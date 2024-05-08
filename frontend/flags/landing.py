@@ -41,6 +41,7 @@ LandingFlags = Flags(
                         "description": StringFlag(),
                         "ownerFullname": StringFlag(),
                         "owner": StringFlag(),
+                        "url": StringFlag(),
                     }
                 )
             )

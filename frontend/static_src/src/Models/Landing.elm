@@ -30,6 +30,7 @@ type alias Epics_ =
     , description : String
     , ownerFullname : String
     , owner : String
+    , url : String
     }
 
 
@@ -59,3 +60,4 @@ epics_Decoder =
         |> required "description" Decode.string
         |> required "ownerFullname" Decode.string
         |> required "owner" Decode.string
+        |> required "url" Decode.string
