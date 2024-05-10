@@ -14,19 +14,25 @@ key = "frontendepic-djelm-Epic"
 EpicFlags = Flags(
      ObjectFlag(
          {
-             "title": StringFlag(),
-             "pubDate": StringFlag(),
-             "description": StringFlag(),
-             "ownerFullname": StringFlag(),
-             "stories": ListFlag(
-                 ObjectFlag(
-                     {
-                         "title": StringFlag(),
-                         "description": StringFlag(),
-                         "status": StringFlag(),
-                     }
-                 )
-             )
-        }
+             "epic": ObjectFlag(
+                 {
+                     "title": StringFlag(),
+                     "pubDate": StringFlag(),
+                     "description": StringFlag(),
+                     "ownerFullname": StringFlag(),
+                     "stories": ListFlag(
+                         ObjectFlag(
+                             {
+                                 "title": StringFlag(),
+                                 "description": StringFlag(),
+                                 "status": StringFlag(),
+                             }
+                         )
+                     )
+                 }
+             ),
+             "logoutUrl": StringFlag(),
+             "csrfToken": StringFlag(),
+         }
      )
 )

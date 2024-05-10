@@ -2,6 +2,7 @@ module Landing exposing (..)
 
 import Browser
 import Browser.Navigation as Nav
+import Common exposing (logoutForm)
 import Html exposing (Html)
 import Html.Attributes as HtmlA
 import Html.Events as HtmlE
@@ -229,7 +230,6 @@ epicsView model =
                 Just _ ->
                     Html.button
                         [ HtmlE.onClick UserWantsAllEpics
-                        , HtmlA.class "button"
                         , HtmlA.class "blue"
                         ]
                         [ Html.text "All epics" ]
@@ -237,7 +237,6 @@ epicsView model =
                 _ ->
                     Html.button
                         [ HtmlE.onClick UserWantsHisEpics
-                        , HtmlA.class "button"
                         , HtmlA.class "green"
                         ]
                         [ Html.text "My epics" ]
@@ -291,21 +290,5 @@ userView model =
             ]
         , Html.div
             [ HtmlA.class "toolbar" ]
-            [ Html.form
-                [ HtmlA.action model.logoutUrl
-                , HtmlA.method "post"
-                ]
-                [ Html.input
-                    [ HtmlA.type_ "hidden"
-                    , HtmlA.name "csrfmiddlewaretoken"
-                    , HtmlA.value model.csrfToken
-                    ]
-                    []
-                , Html.button
-                    [ HtmlA.type_ "submit"
-                    , HtmlA.class "red"
-                    ]
-                    [ Html.text "Log out" ]
-                ]
-            ]
+            [ logoutForm model.csrfToken model.logoutUrl ]
         ]

@@ -9,14 +9,20 @@ import Json.Decode.Pipeline exposing (required, optional, hardcoded)
 
 
 type alias ToModel =
+    { epic : Epic_
+    , logoutUrl : String
+    , csrfToken : String
+    }
+
+type alias Epic_ =
     { title : String
     , pubDate : String
     , description : String
     , ownerFullname : String
-    , stories : List Stories_
+    , stories : List Epic_Stories__
     }
 
-type alias Stories_ =
+type alias Epic_Stories__ =
     { title : String
     , description : String
     , status : String
@@ -26,15 +32,22 @@ type alias Stories_ =
 toModel : Decode.Decoder ToModel
 toModel =
     Decode.succeed ToModel
+        |> required "epic" epic_Decoder
+        |> required "logoutUrl" Decode.string
+        |> required "csrfToken" Decode.string
+
+epic_Decoder : Decode.Decoder Epic_
+epic_Decoder =
+    Decode.succeed Epic_
         |> required "title" Decode.string
         |> required "pubDate" Decode.string
         |> required "description" Decode.string
         |> required "ownerFullname" Decode.string
-        |> required "stories" (Decode.list stories_Decoder)
+        |> required "stories" (Decode.list epic_stories__Decoder)
 
-stories_Decoder : Decode.Decoder Stories_
-stories_Decoder =
-    Decode.succeed Stories_
+epic_stories__Decoder : Decode.Decoder Epic_Stories__
+epic_stories__Decoder =
+    Decode.succeed Epic_Stories__
         |> required "title" Decode.string
         |> required "description" Decode.string
         |> required "status" Decode.string

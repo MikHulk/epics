@@ -23,6 +23,11 @@
   color: var(--green);
 }
 
+.bg-green {
+  background-color: var(--green);
+  border-color: var(--green);
+}
+
 
 /* tag */
 
@@ -69,8 +74,14 @@ button {
   cursor: pointer;
 }
 
+/* identifier */
 
-/* others */
+#epic-detail {
+  max-height: 40%;
+  overflow-y: scroll;
+}
+
+/* class */
 
 .clickable {
   cursor: pointer;
@@ -107,6 +118,10 @@ button {
   font-size: larger;
   padding: 6px 8px;
   flex: none;
+}
+
+.head-container form {
+  display: flex;
 }
 
 .head-container h1 {

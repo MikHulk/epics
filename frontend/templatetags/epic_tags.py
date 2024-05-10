@@ -6,7 +6,7 @@ register = template.Library()
 
 @register.inclusion_tag("djelm/program.html", takes_context=True)
 def render_epic(context):
-    return {"key": key, "flags": EpicFlags.parse(context['model'])}
+    return {"key": key, "flags": EpicFlags.parse(context['to_model'])}
 
 
 @register.inclusion_tag("djelm/include.html")
