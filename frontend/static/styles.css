@@ -91,6 +91,10 @@ button {
   display: flex;
 }
 
+.description {
+  margin: 5px 0;
+}
+
 .error-msg {
   background-color: #422C33;
   border: solid 2px red;
@@ -101,15 +105,13 @@ button {
 
 .head-container {
   font-size: larger;
-  padding: 2px 8px 6px 8px;
+  padding: 6px 8px;
   flex: none;
 }
 
 .head-container h1 {
   font-size: 1.1em;
-  margin: 0;
-  margin-bottom: 6px;
-  margin-top: 9px;
+  margin: 0 auto;
 }
 
 .head-container p {
@@ -135,8 +137,8 @@ button {
   margin-top: 0;
 }
 
-.list-item p {
-  margin: 2px 0;
+.list-item > * {
+  margin: 4px 0;
 }
 
 .scrollable-container {
@@ -163,7 +165,8 @@ button {
   background-color: #46444F;
 }
 
-toolbar {
+.toolbar {
   display: flex;
   gap: 10px;
+  padding-top: 6px;
 }

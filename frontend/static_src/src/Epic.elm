@@ -88,7 +88,7 @@ view model =
                         , Html.text epic.pubDate
                         ]
                     , Html.div [] <|
-                        List.map (\l -> Html.p [] [ Html.text l ]) <|
+                        List.map (\l -> Html.p [ HtmlA.class "description" ] [ Html.text l ]) <|
                             String.split "\n" epic.description
                     ]
                 , storiesView epic.stories
