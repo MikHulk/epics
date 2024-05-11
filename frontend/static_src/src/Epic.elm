@@ -204,6 +204,18 @@ view state =
 
 storiesView : StoryModel -> Html.Html Msg
 storiesView model =
+    let
+        onOffFor status =
+            if List.member status model.statusFilter then
+                [ HtmlA.class "bg-green"
+                , HtmlE.onClick <| UserRemoveStatusFilter status
+                ]
+
+            else
+                [ HtmlA.class "green"
+                , HtmlE.onClick <| UserAddStatusFilter status
+                ]
+    in
     Html.div
         [ HtmlA.class "container"
         , HtmlA.class "scrollable-container"
@@ -216,64 +228,19 @@ storiesView model =
                 ]
                 [ Html.text "All" ]
             , Html.button
-                (if List.member Created model.statusFilter then
-                    [ HtmlA.class "bg-green"
-                    , HtmlE.onClick <| UserRemoveStatusFilter Created
-                    ]
-
-                 else
-                    [ HtmlA.class "green"
-                    , HtmlE.onClick <| UserAddStatusFilter Created
-                    ]
-                )
+                (onOffFor Created)
                 [ Html.text "created" ]
             , Html.button
-                (if List.member OnGoing model.statusFilter then
-                    [ HtmlA.class "bg-green"
-                    , HtmlE.onClick <| UserRemoveStatusFilter OnGoing
-                    ]
-
-                 else
-                    [ HtmlA.class "green"
-                    , HtmlE.onClick <| UserAddStatusFilter OnGoing
-                    ]
-                )
+                (onOffFor OnGoing)
                 [ Html.text "on going" ]
             , Html.button
-                (if List.member Cancelled model.statusFilter then
-                    [ HtmlA.class "bg-green"
-                    , HtmlE.onClick <| UserRemoveStatusFilter Cancelled
-                    ]
-
-                 else
-                    [ HtmlA.class "green"
-                    , HtmlE.onClick <| UserAddStatusFilter Cancelled
-                    ]
-                )
+                (onOffFor Cancelled)
                 [ Html.text "cancelled" ]
             , Html.button
-                (if List.member Suspended model.statusFilter then
-                    [ HtmlA.class "bg-green"
-                    , HtmlE.onClick <| UserRemoveStatusFilter Suspended
-                    ]
-
-                 else
-                    [ HtmlA.class "green"
-                    , HtmlE.onClick <| UserAddStatusFilter Suspended
-                    ]
-                )
+                (onOffFor Suspended)
                 [ Html.text "suspended" ]
             , Html.button
-                (if List.member Finished model.statusFilter then
-                    [ HtmlA.class "bg-green"
-                    , HtmlE.onClick <| UserRemoveStatusFilter Finished
-                    ]
-
-                 else
-                    [ HtmlA.class "green"
-                    , HtmlE.onClick <| UserAddStatusFilter Finished
-                    ]
-                )
+                (onOffFor Finished)
                 [ Html.text "finished" ]
             ]
         , Html.div
