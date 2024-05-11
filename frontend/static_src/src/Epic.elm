@@ -181,6 +181,7 @@ view state =
                 , Html.div
                     [ HtmlA.class "container"
                     , HtmlA.class "list-item"
+                    , HtmlA.id "epic-detail"
                     ]
                     [ Html.h1 [] [ Html.text model.epic.title ]
                     , Html.p []
