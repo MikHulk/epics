@@ -36,6 +36,7 @@ type Status
     | Cancelled
     | Suspended
     | Finished
+    | Unknown
 
 
 type alias StoryModel =
@@ -160,6 +161,28 @@ update msg state =
             ( state, Cmd.none )
 
 
+statusFromString : String -> Status
+statusFromString s =
+    case s of
+        "created" ->
+            Created
+
+        "suspended" ->
+            Suspended
+
+        "canceled" ->
+            Cancelled
+
+        "in progress" ->
+            OnGoing
+
+        "finished" ->
+            Finished
+
+        _ ->
+            Unknown
+
+
 view : State -> Html.Html Msg
 view state =
     case state of
@@ -258,5 +281,13 @@ storiesView model =
                             [ Html.text story.description ]
                         ]
                 )
-                model.stories
+            <|
+                List.filter
+                    (\story ->
+                        not <|
+                            List.member
+                                (statusFromString story.status)
+                                model.statusFilter
+                    )
+                    model.stories
         ]
