@@ -16,6 +16,7 @@ type Msg
     | UserAddStatusFilter Status
     | UserRemoveStatusFilter Status
     | UserRemoveAllFilters
+    | UserUpdateTextSearch String
 
 
 type alias Epic =
@@ -42,6 +43,7 @@ type Status
 type alias StoryModel =
     { stories : List Story
     , statusFilter : List Status
+    , textSearch : Maybe String
     }
 
 
@@ -82,6 +84,7 @@ init f =
                     , stories =
                         { stories = m.epic.stories
                         , statusFilter = [ Cancelled, Finished, Suspended ]
+                        , textSearch = Nothing
                         }
                     }
             in
@@ -118,11 +121,11 @@ update msg state =
                     []
 
                 stories =
-                    model.stories.stories
+                    model.stories
             in
             ( Ready
                 { model
-                    | stories = { stories = stories, statusFilter = newFilters }
+                    | stories = { stories | statusFilter = newFilters }
                 }
             , Cmd.none
             )
@@ -133,11 +136,11 @@ update msg state =
                     List.filter (\s -> s /= status) model.stories.statusFilter
 
                 stories =
-                    model.stories.stories
+                    model.stories
             in
             ( Ready
                 { model
-                    | stories = { stories = stories, statusFilter = newFilters }
+                    | stories = { stories | statusFilter = newFilters }
                 }
             , Cmd.none
             )
@@ -148,12 +151,32 @@ update msg state =
                     status :: model.stories.statusFilter
 
                 stories =
-                    model.stories.stories
+                    model.stories
             in
             ( Ready
                 { model
-                    | stories = { stories = stories, statusFilter = newFilters }
+                    | stories = { stories | statusFilter = newFilters }
                 }
+            , Cmd.none
+            )
+
+        ( Ready model, UserUpdateTextSearch text ) ->
+            let
+                term =
+                    if text /= "" then
+                        Just <| String.toLower text
+
+                    else
+                        Nothing
+
+                stories =
+                    model.stories
+
+                newStories =
+                    { stories | textSearch = term }
+            in
+            ( Ready
+                { model | stories = newStories }
             , Cmd.none
             )
 
@@ -225,17 +248,46 @@ view state =
             Html.text "Something went wrong"
 
 
+filterStories : StoryModel -> List Story
+filterStories model =
+    let
+        storiesForStatus =
+            List.filter
+                (\story ->
+                    not <|
+                        List.member
+                            (statusFromString story.status)
+                            model.statusFilter
+                )
+                model.stories
+
+        storiesForText =
+            case model.textSearch of
+                Nothing ->
+                    storiesForStatus
+
+                Just text ->
+                    List.filter
+                        (\story ->
+                            (String.contains text <| String.toLower story.description)
+                                || (String.contains text <| String.toLower story.title)
+                        )
+                        storiesForStatus
+    in
+    storiesForText
+
+
 storiesView : StoryModel -> Html.Html Msg
 storiesView model =
     let
         onOffFor status =
             if List.member status model.statusFilter then
-                [ HtmlA.class "bg-green"
+                [ HtmlA.class "green"
                 , HtmlE.onClick <| UserRemoveStatusFilter status
                 ]
 
             else
-                [ HtmlA.class "green"
+                [ HtmlA.class "bg-green"
                 , HtmlE.onClick <| UserAddStatusFilter status
                 ]
     in
@@ -265,6 +317,17 @@ storiesView model =
             , Html.button
                 (onOffFor Finished)
                 [ Html.text "finished" ]
+            , Html.input
+                [ HtmlE.onInput UserUpdateTextSearch
+                , HtmlA.value <|
+                    case model.textSearch of
+                        Nothing ->
+                            ""
+
+                        Just text ->
+                            text
+                ]
+                []
             ]
         , Html.div
             [ HtmlA.class "scrollable-list"
@@ -282,12 +345,5 @@ storiesView model =
                         ]
                 )
             <|
-                List.filter
-                    (\story ->
-                        not <|
-                            List.member
-                                (statusFromString story.status)
-                                model.statusFilter
-                    )
-                    model.stories
+                filterStories model
         ]
