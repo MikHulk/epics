@@ -41,6 +41,8 @@ type alias Story =
     , title : String
     , description : String
     , status : Status
+    , assignedTo : Maybe String
+    , assignedToFullname : Maybe String
     }
 
 
@@ -91,6 +93,8 @@ init f =
                     , pubDate = story.pubDate
                     , description = story.description
                     , status = statusFromString story.status
+                    , assignedTo = story.assignedTo
+                    , assignedToFullname = story.assignedToFullname
                     }
 
                 model =
@@ -238,6 +242,8 @@ update msg state =
                                 , title = story.title
                                 , description = story.description
                                 , status = newStatus
+                                , assignedTo = story.assignedTo
+                                , assignedToFullname = story.assignedToFullname
                                 }
 
                             else
@@ -358,6 +364,7 @@ view state =
                             String.split "\n" model.epic.description
                     ]
                 , storiesView
+                    model.session.username
                     (model.session.username == model.epic.owner)
                     model.stories
                 ]
@@ -397,8 +404,8 @@ filterStories model =
     storiesForText
 
 
-storiesView : Bool -> StoryModel -> Html.Html Msg
-storiesView isOwner model =
+storiesView : String -> Bool -> StoryModel -> Html.Html Msg
+storiesView username isOwner model =
     let
         onOffFor status =
             if List.member status model.statusFilter then
@@ -454,14 +461,14 @@ storiesView isOwner model =
             ]
           <|
             List.map
-                (storyItem isOwner)
+                (storyItem username isOwner)
             <|
                 filterStories model
         ]
 
 
-storyItem : Bool -> Story -> Html.Html Msg
-storyItem isOwner story =
+storyItem : String -> Bool -> Story -> Html.Html Msg
+storyItem username isOwner story =
     let
         takeButton =
             Html.div
@@ -520,14 +527,32 @@ storyItem isOwner story =
                         [ takeButton, suspendButton, cancelButton, validateButton ]
 
                     else
-                        [ takeButton ]
+                        case story.assignedTo of
+                            Just s ->
+                                if s == username then
+                                    []
+
+                                else
+                                    [ takeButton ]
+
+                            Nothing ->
+                                [ takeButton ]
 
                 OnGoing ->
                     if isOwner then
                         [ takeButton, suspendButton, cancelButton, validateButton ]
 
                     else
-                        [ takeButton ]
+                        case story.assignedTo of
+                            Just s ->
+                                if s == username then
+                                    []
+
+                                else
+                                    [ takeButton ]
+
+                            Nothing ->
+                                [ takeButton ]
 
                 Suspended ->
                     if isOwner then
@@ -547,6 +572,12 @@ storyItem isOwner story =
           <|
             (Html.text <| "Status: " ++ statusToString story.status)
                 :: controlButtons
+        , case story.assignedToFullname of
+            Just s ->
+                Html.p [] [ Html.text <| "assigned to: " ++ s ]
+
+            _ ->
+                Html.text ""
         , Html.p
             [ HtmlA.class "item-description" ]
             [ Html.text story.description ]
@@ -568,42 +599,59 @@ storyActionRequest csrfToken url =
         , timeout = Nothing
         , tracker = Nothing
         }
-    
+
+
 takeStory : String -> Int -> Cmd Msg
 takeStory csrfToken storyId =
-    storyActionRequest csrfToken
-    <| "/epics-api/stories/" ++ String.fromInt storyId ++ "/take/"
+    storyActionRequest csrfToken <|
+        "/epics-api/stories/"
+            ++ String.fromInt storyId
+            ++ "/take/"
 
 
 suspendStory : String -> Int -> Cmd Msg
 suspendStory csrfToken storyId =
-    storyActionRequest csrfToken
-    <| "/epics-api/stories/" ++ String.fromInt storyId ++ "/suspend/"
+    storyActionRequest csrfToken <|
+        "/epics-api/stories/"
+            ++ String.fromInt storyId
+            ++ "/suspend/"
 
 
 resumeStory : String -> Int -> Cmd Msg
 resumeStory csrfToken storyId =
-    storyActionRequest csrfToken
-    <| "/epics-api/stories/" ++ String.fromInt storyId ++ "/resume/"
-        
+    storyActionRequest csrfToken <|
+        "/epics-api/stories/"
+            ++ String.fromInt storyId
+            ++ "/resume/"
+
 
 cancelStory : String -> Int -> Cmd Msg
 cancelStory csrfToken storyId =
-    storyActionRequest csrfToken
-    <| "/epics-api/stories/" ++ String.fromInt storyId ++ "/cancel/"
+    storyActionRequest csrfToken <|
+        "/epics-api/stories/"
+            ++ String.fromInt storyId
+            ++ "/cancel/"
 
 
 validateStory : String -> Int -> Cmd Msg
 validateStory csrfToken storyId =
-    storyActionRequest csrfToken
-    <| "/epics-api/stories/" ++ String.fromInt storyId ++ "/validate/"
+    storyActionRequest csrfToken <|
+        "/epics-api/stories/"
+            ++ String.fromInt storyId
+            ++ "/validate/"
 
 
 storyDecoder : JsonD.Decoder Epic_Stories__
 storyDecoder =
-    JsonD.map5 Epic_Stories__
+    JsonD.map7 Epic_Stories__
         (JsonD.field "id" JsonD.int)
         (JsonD.field "pub_date" JsonD.string)
         (JsonD.field "title" JsonD.string)
         (JsonD.field "description" JsonD.string)
         (JsonD.field "status" JsonD.string)
+        (JsonD.field "assigned_to"
+            (JsonD.nullable (JsonD.field "user" (JsonD.field "username" JsonD.string)))
+        )
+        (JsonD.field "assigned_to"
+            (JsonD.nullable (JsonD.field "fullname" JsonD.string))
+        )

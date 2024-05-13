@@ -7,7 +7,14 @@ For the best developer experience ensure the following:
 - The key variable value "frontendepic-djelmwidget-Epic" is not modified
 """
 
-from djelm.flags import Flags, ListFlag, StringFlag, ObjectFlag, IntFlag
+from djelm.flags import (
+    Flags,
+    ListFlag,
+    StringFlag,
+    ObjectFlag,
+    NullableFlag,
+    IntFlag,
+)
 
 key = "frontendepic-djelm-Epic"
 
@@ -29,6 +36,8 @@ EpicFlags = Flags(
                                 "title": StringFlag(),
                                 "description": StringFlag(),
                                 "status": StringFlag(),
+                                "assignedTo": NullableFlag(StringFlag()),
+                                "assignedToFullname": NullableFlag(StringFlag()),
                             }
                         )
                     )

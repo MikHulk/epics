@@ -30,6 +30,8 @@ type alias Epic_Stories__ =
     , title : String
     , description : String
     , status : String
+    , assignedTo : Maybe String
+    , assignedToFullname : Maybe String
     }
 
 
@@ -59,3 +61,5 @@ epic_stories__Decoder =
         |> required "title" Decode.string
         |> required "description" Decode.string
         |> required "status" Decode.string
+        |> required "assignedTo" (Decode.nullable Decode.string)
+        |> required "assignedToFullname" (Decode.nullable Decode.string)

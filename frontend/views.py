@@ -58,6 +58,8 @@ def epic_view(request, epic_id, *, context):
                 "title": story.title,
                 "description": story.description,
                 "status": story.status,
+                "assignedTo": story.assigned_to and story.assigned_to.user.username or None,
+                "assignedToFullname": story.assigned_to and story.assigned_to.fullname or None
             } for story in epic.stories.order_by('-pub_date').all()
         ]
     }
