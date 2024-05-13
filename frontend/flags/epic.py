@@ -20,6 +20,7 @@ EpicFlags = Flags(
                     "pubDate": StringFlag(),
                     "description": StringFlag(),
                     "ownerFullname": StringFlag(),
+                    "owner": StringFlag(),
                     "stories": ListFlag(
                         ObjectFlag(
                             {
@@ -35,6 +36,7 @@ EpicFlags = Flags(
             ),
             "logoutUrl": StringFlag(),
             "csrfToken": StringFlag(),
+            "username": StringFlag(),
         }
     )
 )

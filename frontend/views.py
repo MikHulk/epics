@@ -44,11 +44,13 @@ def epic_view(request, epic_id, *, context):
         .prefetch_related('stories')
         .get(pk=epic_id)
     )
+    context["to_model"]["username"] = request.user.username
     context["to_model"]["epic"] = {
         "title": epic.title,
         "pubDate": epic.pub_date.isoformat(),
         "description": epic.description,
         "ownerFullname": epic.owner.fullname,
+        "owner": epic.owner.user.username,
         "stories": [
             {
                 "id": story.pk,

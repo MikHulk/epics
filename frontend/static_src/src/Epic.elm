@@ -19,7 +19,11 @@ type Msg
     | UserRemoveAllFilters
     | UserUpdateTextSearch String
     | UserTakeStory Story
-    | StoryTaken (Result Http.Error Epic_Stories__)
+    | UserSuspendStory Story
+    | UserResumeStory Story
+    | UserCancelStory Story
+    | UserValidateStory Story
+    | StoryChanged (Result Http.Error Epic_Stories__)
 
 
 type alias Epic =
@@ -27,6 +31,7 @@ type alias Epic =
     , pubDate : String
     , description : String
     , ownerFullname : String
+    , owner : String
     }
 
 
@@ -66,6 +71,7 @@ type alias Model =
 type alias SessionInfo =
     { csrfToken : String
     , logoutUrl : String
+    , username : String
     }
 
 
@@ -91,12 +97,14 @@ init f =
                     { session =
                         { csrfToken = m.csrfToken
                         , logoutUrl = m.logoutUrl
+                        , username = m.username
                         }
                     , epic =
                         { title = m.epic.title
                         , pubDate = m.epic.pubDate
                         , description = m.epic.description
                         , ownerFullname = m.epic.ownerFullname
+                        , owner = m.epic.owner
                         }
                     , stories =
                         { stories = List.map toStory m.epic.stories
@@ -201,7 +209,19 @@ update msg state =
         ( Ready model, UserTakeStory story ) ->
             ( state, takeStory model.session.csrfToken story.id )
 
-        ( Ready model, StoryTaken (Ok story) ) ->
+        ( Ready model, UserSuspendStory story ) ->
+            ( state, suspendStory model.session.csrfToken story.id )
+
+        ( Ready model, UserResumeStory story ) ->
+            ( state, resumeStory model.session.csrfToken story.id )
+
+        ( Ready model, UserCancelStory story ) ->
+            ( state, cancelStory model.session.csrfToken story.id )
+
+        ( Ready model, UserValidateStory story ) ->
+            ( state, validateStory model.session.csrfToken story.id )
+
+        ( Ready model, StoryChanged (Ok story) ) ->
             let
                 newStatus =
                     statusFromString story.status
@@ -227,7 +247,7 @@ update msg state =
             in
             ( Ready { model | stories = { stories | stories = newStories } }, Cmd.none )
 
-        ( Ready model, StoryTaken (Err e) ) ->
+        ( Ready model, StoryChanged (Err e) ) ->
             let
                 errorMsg =
                     case e of
@@ -337,7 +357,9 @@ view state =
                         <|
                             String.split "\n" model.epic.description
                     ]
-                , storiesView model.stories
+                , storiesView
+                    (model.session.username == model.epic.owner)
+                    model.stories
                 ]
 
         _ ->
@@ -375,8 +397,8 @@ filterStories model =
     storiesForText
 
 
-storiesView : StoryModel -> Html.Html Msg
-storiesView model =
+storiesView : Bool -> StoryModel -> Html.Html Msg
+storiesView isOwner model =
     let
         onOffFor status =
             if List.member status model.statusFilter then
@@ -432,14 +454,14 @@ storiesView model =
             ]
           <|
             List.map
-                storyItem
+                (storyItem isOwner)
             <|
                 filterStories model
         ]
 
 
-storyItem : Story -> Html.Html Msg
-storyItem story =
+storyItem : Bool -> Story -> Html.Html Msg
+storyItem isOwner story =
     let
         takeButton =
             Html.div
@@ -451,13 +473,68 @@ storyItem story =
                 ]
                 [ Html.text "⛏" ]
 
+        suspendButton =
+            Html.div
+                [ HtmlA.class "blue"
+                , HtmlA.style "font-size" "1.2em"
+                , HtmlA.style "margin-top" "-0.1em"
+                , HtmlA.style "cursor" "pointer"
+                , HtmlE.onClick <| UserSuspendStory story
+                ]
+                [ Html.text "✋" ]
+
+        resumeButton =
+            Html.div
+                [ HtmlA.class "blue"
+                , HtmlA.style "font-size" "1.2em"
+                , HtmlA.style "margin-top" "-0.1em"
+                , HtmlA.style "cursor" "pointer"
+                , HtmlE.onClick <| UserResumeStory story
+                ]
+                [ Html.text "✨" ]
+
+        cancelButton =
+            Html.div
+                [ HtmlA.class "blue"
+                , HtmlA.style "font-size" "1.2em"
+                , HtmlA.style "margin-top" "-0.1em"
+                , HtmlA.style "cursor" "pointer"
+                , HtmlE.onClick <| UserCancelStory story
+                ]
+                [ Html.text "❌" ]
+
+        validateButton =
+            Html.div
+                [ HtmlA.class "blue"
+                , HtmlA.style "font-size" "1.2em"
+                , HtmlA.style "margin-top" "-0.1em"
+                , HtmlA.style "cursor" "pointer"
+                , HtmlE.onClick <| UserValidateStory story
+                ]
+                [ Html.text "✅" ]
+
         controlButtons =
             case story.status of
                 Created ->
-                    [ takeButton ]
+                    if isOwner then
+                        [ takeButton, suspendButton, cancelButton, validateButton ]
+
+                    else
+                        [ takeButton ]
 
                 OnGoing ->
-                    [ takeButton ]
+                    if isOwner then
+                        [ takeButton, suspendButton, cancelButton, validateButton ]
+
+                    else
+                        [ takeButton ]
+
+                Suspended ->
+                    if isOwner then
+                        [ resumeButton, cancelButton, validateButton ]
+
+                    else
+                        []
 
                 _ ->
                     []
@@ -480,17 +557,46 @@ storyItem story =
 -- HTTP
 
 
-takeStory : String -> Int -> Cmd Msg
-takeStory csrfToken storyId =
+storyActionRequest : String -> String -> Cmd Msg
+storyActionRequest csrfToken url =
     Http.request
         { method = "PUT"
         , headers = [ Http.header "X-CSRFToken" csrfToken ]
-        , url = "/epics-api/stories/" ++ String.fromInt storyId ++ "/take/"
+        , url = url
         , body = Http.emptyBody
-        , expect = Http.expectJson StoryTaken storyDecoder
+        , expect = Http.expectJson StoryChanged storyDecoder
         , timeout = Nothing
         , tracker = Nothing
         }
+    
+takeStory : String -> Int -> Cmd Msg
+takeStory csrfToken storyId =
+    storyActionRequest csrfToken
+    <| "/epics-api/stories/" ++ String.fromInt storyId ++ "/take/"
+
+
+suspendStory : String -> Int -> Cmd Msg
+suspendStory csrfToken storyId =
+    storyActionRequest csrfToken
+    <| "/epics-api/stories/" ++ String.fromInt storyId ++ "/suspend/"
+
+
+resumeStory : String -> Int -> Cmd Msg
+resumeStory csrfToken storyId =
+    storyActionRequest csrfToken
+    <| "/epics-api/stories/" ++ String.fromInt storyId ++ "/resume/"
+        
+
+cancelStory : String -> Int -> Cmd Msg
+cancelStory csrfToken storyId =
+    storyActionRequest csrfToken
+    <| "/epics-api/stories/" ++ String.fromInt storyId ++ "/cancel/"
+
+
+validateStory : String -> Int -> Cmd Msg
+validateStory csrfToken storyId =
+    storyActionRequest csrfToken
+    <| "/epics-api/stories/" ++ String.fromInt storyId ++ "/validate/"
 
 
 storyDecoder : JsonD.Decoder Epic_Stories__
