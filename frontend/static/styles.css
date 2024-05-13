@@ -112,6 +112,9 @@ button {
   border-radius: 6px;
   margin: 0 1px;
   padding: 10px 9px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .head-container {

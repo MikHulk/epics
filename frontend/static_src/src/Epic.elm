@@ -22,6 +22,7 @@ type StoryAction
 
 type Msg
     = UserReturnsHome
+    | UserCleanError
     | UserAddStatusFilter Status
     | UserRemoveStatusFilter Status
     | UserRemoveAllFilters
@@ -172,6 +173,9 @@ update msg state =
         ( Ready _, UserReturnsHome ) ->
             ( state, Nav.load "/" )
 
+        ( Ready model, UserCleanError ) ->
+            ( Ready { model | error = Nothing }, Cmd.none )
+
         ( Ready model, UserRemoveAllFilters ) ->
             let
                 newFilters =
@@ -238,7 +242,7 @@ update msg state =
             )
 
         ( Ready model, UserActonStory action story ) ->
-            ( state, actionStoryCmd model story action)
+            ( state, actionStoryCmd model story action )
 
         ( Ready model, StoryChanged (Ok story) ) ->
             let
@@ -270,24 +274,25 @@ update msg state =
 
         ( Ready model, StoryChanged (Err e) ) ->
             let
-                errorMsg =
-                    case e of
-                        Http.BadUrl s ->
-                            "Bad URL: " ++ s
+                m =
+                    (++) "Error on story action, " <|
+                        case e of
+                            Http.BadUrl s ->
+                                "Bad URL: " ++ s
 
-                        Http.Timeout ->
-                            "Time out"
+                            Http.Timeout ->
+                                "Time out"
 
-                        Http.NetworkError ->
-                            "Network error"
+                            Http.NetworkError ->
+                                "Network error"
 
-                        Http.BadStatus code ->
-                            "Bad Status: " ++ String.fromInt code
+                            Http.BadStatus code ->
+                                "Bad Status: " ++ String.fromInt code
 
-                        Http.BadBody s ->
-                            "Bad body: " ++ s
+                            Http.BadBody s ->
+                                "Bad body: " ++ s
             in
-            ( Ready { model | error = Just errorMsg }, Cmd.none )
+            ( Ready { model | error = Just m }, Cmd.none )
 
         ( Error, _ ) ->
             ( state, Cmd.none )
@@ -360,7 +365,7 @@ view state =
                         Html.text ""
 
                     Just reason ->
-                        Html.div [ HtmlA.class "error-msg" ] [ Html.text reason ]
+                        errorMsg model reason
                 , Html.div
                     [ HtmlA.class "container"
                     , HtmlA.class "list-item"
@@ -388,6 +393,24 @@ view state =
             Html.div
                 [ HtmlA.class "error-msg" ]
                 [ Html.text "Server error" ]
+
+
+errorMsg : Model -> String -> Html.Html Msg
+errorMsg model reason =
+    Html.div
+        [ HtmlA.class "error-msg" ]
+        [ Html.div [] [ Html.text reason ]
+        , Html.div
+            [ HtmlA.style "background-color" "#a61e1e"
+            , HtmlA.style "color" "black"
+            , HtmlA.style "height" "1em"
+            , HtmlA.style "padding" "0px 4px 4px"
+            , HtmlA.style "font-size" "1em"
+            , HtmlA.style "cursor" "pointer"
+            , HtmlE.onClick UserCleanError
+            ]
+            [ Html.text "✘" ]
+        ]
 
 
 filterStories : StoryModel -> List Story
