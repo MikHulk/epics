@@ -6,7 +6,8 @@ import Common exposing (logoutForm)
 import Html
 import Html.Attributes as HtmlA
 import Html.Events as HtmlE
-import Json.Decode exposing (decodeValue)
+import Http
+import Json.Decode as JsonD
 import Json.Encode exposing (Value)
 import Models.Epic exposing (Epic_, Epic_Stories__, ToModel, toModel)
 
@@ -17,6 +18,8 @@ type Msg
     | UserRemoveStatusFilter Status
     | UserRemoveAllFilters
     | UserUpdateTextSearch String
+    | UserTakeStory Story
+    | StoryTaken (Result Http.Error Epic_Stories__)
 
 
 type alias Epic =
@@ -28,7 +31,12 @@ type alias Epic =
 
 
 type alias Story =
-    Epic_Stories__
+    { id : Int
+    , pubDate : String
+    , title : String
+    , description : String
+    , status : Status
+    }
 
 
 type Status
@@ -51,6 +59,7 @@ type alias Model =
     { session : SessionInfo
     , epic : Epic
     , stories : StoryModel
+    , error : Maybe String
     }
 
 
@@ -67,9 +76,17 @@ type State
 
 init : Value -> ( State, Cmd Msg )
 init f =
-    case decodeValue toModel f of
+    case JsonD.decodeValue toModel f of
         Ok m ->
             let
+                toStory story =
+                    { id = story.id
+                    , title = story.title
+                    , pubDate = story.pubDate
+                    , description = story.description
+                    , status = statusFromString story.status
+                    }
+
                 model =
                     { session =
                         { csrfToken = m.csrfToken
@@ -82,10 +99,11 @@ init f =
                         , ownerFullname = m.epic.ownerFullname
                         }
                     , stories =
-                        { stories = m.epic.stories
+                        { stories = List.map toStory m.epic.stories
                         , statusFilter = [ Cancelled, Finished, Suspended ]
                         , textSearch = Nothing
                         }
+                    , error = Nothing
                     }
             in
             ( Ready model, Cmd.none )
@@ -180,7 +198,57 @@ update msg state =
             , Cmd.none
             )
 
-        _ ->
+        ( Ready model, UserTakeStory story ) ->
+            ( state, takeStory model.session.csrfToken story.id )
+
+        ( Ready model, StoryTaken (Ok story) ) ->
+            let
+                newStatus =
+                    statusFromString story.status
+
+                stories =
+                    model.stories
+
+                newStories =
+                    List.map
+                        (\s ->
+                            if s.id == story.id then
+                                { id = story.id
+                                , pubDate = story.pubDate
+                                , title = story.title
+                                , description = story.description
+                                , status = newStatus
+                                }
+
+                            else
+                                s
+                        )
+                        stories.stories
+            in
+            ( Ready { model | stories = { stories | stories = newStories } }, Cmd.none )
+
+        ( Ready model, StoryTaken (Err e) ) ->
+            let
+                errorMsg =
+                    case e of
+                        Http.BadUrl s ->
+                            "Bad URL: " ++ s
+
+                        Http.Timeout ->
+                            "Time out"
+
+                        Http.NetworkError ->
+                            "Network error"
+
+                        Http.BadStatus code ->
+                            "Bad Status: " ++ String.fromInt code
+
+                        Http.BadBody s ->
+                            "Bad body: " ++ s
+            in
+            ( Ready { model | error = Just errorMsg }, Cmd.none )
+
+        ( Error, _ ) ->
             ( state, Cmd.none )
 
 
@@ -206,6 +274,28 @@ statusFromString s =
             Unknown
 
 
+statusToString : Status -> String
+statusToString s =
+    case s of
+        Created ->
+            "created"
+
+        Suspended ->
+            "suspended"
+
+        Cancelled ->
+            "canceled"
+
+        OnGoing ->
+            "in progress"
+
+        Finished ->
+            "finished"
+
+        Unknown ->
+            "unknwown"
+
+
 view : State -> Html.Html Msg
 view state =
     case state of
@@ -224,6 +314,12 @@ view state =
                         [ Html.text "Home" ]
                     , logoutForm model.session.csrfToken model.session.logoutUrl
                     ]
+                , case model.error of
+                    Nothing ->
+                        Html.text ""
+
+                    Just reason ->
+                        Html.div [ HtmlA.class "error-msg" ] [ Html.text reason ]
                 , Html.div
                     [ HtmlA.class "container"
                     , HtmlA.class "list-item"
@@ -245,7 +341,9 @@ view state =
                 ]
 
         _ ->
-            Html.text "Something went wrong"
+            Html.div
+                [ HtmlA.class "error-msg" ]
+                [ Html.text "Server error" ]
 
 
 filterStories : StoryModel -> List Story
@@ -256,7 +354,7 @@ filterStories model =
                 (\story ->
                     not <|
                         List.member
-                            (statusFromString story.status)
+                            story.status
                             model.statusFilter
                 )
                 model.stories
@@ -334,16 +432,72 @@ storiesView model =
             ]
           <|
             List.map
-                (\story ->
-                    Html.div
-                        [ HtmlA.class "list-item" ]
-                        [ Html.h1 [] [ Html.text story.title ]
-                        , Html.p [] [ Html.text story.status ]
-                        , Html.p
-                            [ HtmlA.class "item-description" ]
-                            [ Html.text story.description ]
-                        ]
-                )
+                storyItem
             <|
                 filterStories model
         ]
+
+
+storyItem : Story -> Html.Html Msg
+storyItem story =
+    let
+        takeButton =
+            Html.div
+                [ HtmlA.class "blue"
+                , HtmlA.style "font-size" "1.2em"
+                , HtmlA.style "margin-top" "-0.1em"
+                , HtmlA.style "cursor" "pointer"
+                , HtmlE.onClick <| UserTakeStory story
+                ]
+                [ Html.text "⛏" ]
+
+        controlButtons =
+            case story.status of
+                Created ->
+                    [ takeButton ]
+
+                OnGoing ->
+                    [ takeButton ]
+
+                _ ->
+                    []
+    in
+    Html.div
+        [ HtmlA.class "list-item" ]
+        [ Html.h1 [] [ Html.text story.title ]
+        , Html.div
+            [ HtmlA.class "story-control" ]
+          <|
+            (Html.text <| "Status: " ++ statusToString story.status)
+                :: controlButtons
+        , Html.p
+            [ HtmlA.class "item-description" ]
+            [ Html.text story.description ]
+        ]
+
+
+
+-- HTTP
+
+
+takeStory : String -> Int -> Cmd Msg
+takeStory csrfToken storyId =
+    Http.request
+        { method = "PUT"
+        , headers = [ Http.header "X-CSRFToken" csrfToken ]
+        , url = "/epics-api/stories/" ++ String.fromInt storyId ++ "/take/"
+        , body = Http.emptyBody
+        , expect = Http.expectJson StoryTaken storyDecoder
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+storyDecoder : JsonD.Decoder Epic_Stories__
+storyDecoder =
+    JsonD.map5 Epic_Stories__
+        (JsonD.field "id" JsonD.int)
+        (JsonD.field "pub_date" JsonD.string)
+        (JsonD.field "title" JsonD.string)
+        (JsonD.field "description" JsonD.string)
+        (JsonD.field "status" JsonD.string)

@@ -16,7 +16,7 @@ def with_logout(f):
         if context:
             context.setdefault("to_model", {})['logoutUrl'] = logout_url
         else:
-            context = { 'to_model': { 'logoutUrl':  logout_url }}
+            context = {'to_model': {'logoutUrl': logout_url}}
         return f(*args, context=context, **kwargs)
     return g
 
@@ -27,7 +27,7 @@ def with_csrf(f):
         if context:
             context.setdefault("to_model", {})['csrfToken'] = csrf_token
         else:
-            context = {'to_model': { 'csrfToken':  csrf_token }}
+            context = {'to_model': {'csrfToken': csrf_token}}
         return f(request, *args, context=context, **kwargs)
     return g
 
@@ -37,7 +37,7 @@ def with_csrf(f):
 @with_logout
 @with_csrf
 def epic_view(request, epic_id, *, context):
-    url =  f"{reverse('frontend:epic-detail', args=[epic_id])}"
+    url = f"{reverse('frontend:epic-detail', args=[epic_id])}"
     epic = (
         Epic.objects
         .select_related('owner')
@@ -51,10 +51,12 @@ def epic_view(request, epic_id, *, context):
         "ownerFullname": epic.owner.fullname,
         "stories": [
             {
+                "id": story.pk,
+                "pubDate": story.pub_date.isoformat(),
                 "title": story.title,
                 "description": story.description,
                 "status": story.status,
-            } for story in epic.stories.all()
+            } for story in epic.stories.order_by('-pub_date').all()
         ]
     }
     return render(
@@ -68,14 +70,14 @@ def epic_view(request, epic_id, *, context):
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @with_logout
 @with_csrf
-def landing_view(request,* , context):
+def landing_view(request, *, context):
     epics = [
-        { "title": epic.title,
-          "pubDate": epic.pub_date.isoformat(),
-          "description": epic.description,
-          "ownerFullname": epic.owner.fullname,
-          "owner": epic.owner.user.username,
-          "url": reverse('frontend:epic-detail', args=[epic.pk]),
+        {"title": epic.title,
+         "pubDate": epic.pub_date.isoformat(),
+         "description": epic.description,
+         "ownerFullname": epic.owner.fullname,
+         "owner": epic.owner.user.username,
+         "url": reverse('frontend:epic-detail', args=[epic.pk]),
          } for epic in Epic.objects.select_related("owner").select_related("owner__user")
     ]
     context["to_model"]["userInfo"] = {

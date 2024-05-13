@@ -28,10 +28,10 @@
   border-color: var(--green);
 }
 
-
 /* tag */
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   color: var(--main-color);
@@ -62,7 +62,7 @@ main {
 
 footer {
   padding: 9px;
-  flex:none;
+  flex: none;
 }
 
 button {
@@ -88,14 +88,14 @@ button {
 }
 
 .container {
-  background-color: #3F444F;
+  background-color: #3f444f;
   border: solid 2px;
   border-radius: 6px;
 }
 
 .container-toolbar {
   padding: 6px 7px;
-  background-color: #4A4857;
+  background-color: #4a4857;
   font-size: 1.2em;
   border-bottom: solid 1px;
   gap: 11px;
@@ -107,7 +107,7 @@ button {
 }
 
 .error-msg {
-  background-color: #422C33;
+  background-color: #422c33;
   border: solid 2px red;
   border-radius: 6px;
   margin: 0 1px;
@@ -168,16 +168,25 @@ button {
   max-height: 100%;
 }
 
-.scrollable-list div:not(:last-child) {
+.scrollable-list > div:not(:last-child) {
   border-bottom: solid 1px;
 }
 
-.scrollable-list div:nth-child(odd) {
+.scrollable-list > div:nth-child(odd) {
   background-color: #334246;
 }
 
-.scrollable-list div:nth-child(even) {
-  background-color: #46444F;
+.scrollable-list > div:nth-child(even) {
+  background-color: #46444f;
+}
+
+.story-control {
+  display: flex;
+  gap: 1em;
+}
+
+.story-control p {
+  margin: 2px 0;
 }
 
 .toolbar {

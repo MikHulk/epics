@@ -23,7 +23,9 @@ type alias Epic_ =
     }
 
 type alias Epic_Stories__ =
-    { title : String
+    { id : Int
+    , pubDate : String
+    , title : String
     , description : String
     , status : String
     }
@@ -48,6 +50,8 @@ epic_Decoder =
 epic_stories__Decoder : Decode.Decoder Epic_Stories__
 epic_stories__Decoder =
     Decode.succeed Epic_Stories__
+        |> required "id" Decode.int
+        |> required "pubDate" Decode.string
         |> required "title" Decode.string
         |> required "description" Decode.string
         |> required "status" Decode.string
