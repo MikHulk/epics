@@ -12,17 +12,21 @@ import Json.Encode exposing (Value)
 import Models.Epic exposing (Epic_, Epic_Stories__, ToModel, toModel)
 
 
+type StoryAction
+    = Take
+    | Suspend
+    | Resume
+    | Cancel
+    | Validate
+
+
 type Msg
     = UserReturnsHome
     | UserAddStatusFilter Status
     | UserRemoveStatusFilter Status
     | UserRemoveAllFilters
     | UserUpdateTextSearch String
-    | UserTakeStory Story
-    | UserSuspendStory Story
-    | UserResumeStory Story
-    | UserCancelStory Story
-    | UserValidateStory Story
+    | UserActonStory StoryAction Story
     | StoryChanged (Result Http.Error Epic_Stories__)
 
 
@@ -139,6 +143,29 @@ subscriptions _ =
     Sub.none
 
 
+actionStoryCmd : Model -> Story -> StoryAction -> Cmd Msg
+actionStoryCmd model story action =
+    let
+        cmd =
+            case action of
+                Take ->
+                    takeStory
+
+                Suspend ->
+                    suspendStory
+
+                Resume ->
+                    resumeStory
+
+                Cancel ->
+                    cancelStory
+
+                Validate ->
+                    validateStory
+    in
+    cmd model.session.csrfToken story.id
+
+
 update : Msg -> State -> ( State, Cmd Msg )
 update msg state =
     case ( state, msg ) of
@@ -210,20 +237,8 @@ update msg state =
             , Cmd.none
             )
 
-        ( Ready model, UserTakeStory story ) ->
-            ( state, takeStory model.session.csrfToken story.id )
-
-        ( Ready model, UserSuspendStory story ) ->
-            ( state, suspendStory model.session.csrfToken story.id )
-
-        ( Ready model, UserResumeStory story ) ->
-            ( state, resumeStory model.session.csrfToken story.id )
-
-        ( Ready model, UserCancelStory story ) ->
-            ( state, cancelStory model.session.csrfToken story.id )
-
-        ( Ready model, UserValidateStory story ) ->
-            ( state, validateStory model.session.csrfToken story.id )
+        ( Ready model, UserActonStory action story ) ->
+            ( state, actionStoryCmd model story action)
 
         ( Ready model, StoryChanged (Ok story) ) ->
             let
@@ -476,7 +491,7 @@ storyItem username isOwner story =
                 , HtmlA.style "font-size" "1.2em"
                 , HtmlA.style "margin-top" "-0.1em"
                 , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserTakeStory story
+                , HtmlE.onClick <| UserActonStory Take story
                 ]
                 [ Html.text "⛏" ]
 
@@ -486,7 +501,7 @@ storyItem username isOwner story =
                 , HtmlA.style "font-size" "1.2em"
                 , HtmlA.style "margin-top" "-0.1em"
                 , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserSuspendStory story
+                , HtmlE.onClick <| UserActonStory Suspend story
                 ]
                 [ Html.text "✋" ]
 
@@ -496,7 +511,7 @@ storyItem username isOwner story =
                 , HtmlA.style "font-size" "1.2em"
                 , HtmlA.style "margin-top" "-0.1em"
                 , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserResumeStory story
+                , HtmlE.onClick <| UserActonStory Resume story
                 ]
                 [ Html.text "✨" ]
 
@@ -506,7 +521,7 @@ storyItem username isOwner story =
                 , HtmlA.style "font-size" "1.2em"
                 , HtmlA.style "margin-top" "-0.1em"
                 , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserCancelStory story
+                , HtmlE.onClick <| UserActonStory Cancel story
                 ]
                 [ Html.text "❌" ]
 
@@ -516,7 +531,7 @@ storyItem username isOwner story =
                 , HtmlA.style "font-size" "1.2em"
                 , HtmlA.style "margin-top" "-0.1em"
                 , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserValidateStory story
+                , HtmlE.onClick <| UserActonStory Validate story
                 ]
                 [ Html.text "✅" ]
 
@@ -588,12 +603,12 @@ storyItem username isOwner story =
 -- HTTP
 
 
-storyActionRequest : String -> String -> Cmd Msg
-storyActionRequest csrfToken url =
+storyActionRequest : String -> String -> Int -> Cmd Msg
+storyActionRequest csrfToken action storyId =
     Http.request
         { method = "PUT"
         , headers = [ Http.header "X-CSRFToken" csrfToken ]
-        , url = url
+        , url = "/epics-api/stories/" ++ String.fromInt storyId ++ "/" ++ action ++ "/"
         , body = Http.emptyBody
         , expect = Http.expectJson StoryChanged storyDecoder
         , timeout = Nothing
@@ -603,42 +618,27 @@ storyActionRequest csrfToken url =
 
 takeStory : String -> Int -> Cmd Msg
 takeStory csrfToken storyId =
-    storyActionRequest csrfToken <|
-        "/epics-api/stories/"
-            ++ String.fromInt storyId
-            ++ "/take/"
+    storyActionRequest csrfToken "take" storyId
 
 
 suspendStory : String -> Int -> Cmd Msg
 suspendStory csrfToken storyId =
-    storyActionRequest csrfToken <|
-        "/epics-api/stories/"
-            ++ String.fromInt storyId
-            ++ "/suspend/"
+    storyActionRequest csrfToken "suspend" storyId
 
 
 resumeStory : String -> Int -> Cmd Msg
 resumeStory csrfToken storyId =
-    storyActionRequest csrfToken <|
-        "/epics-api/stories/"
-            ++ String.fromInt storyId
-            ++ "/resume/"
+    storyActionRequest csrfToken "resume" storyId
 
 
 cancelStory : String -> Int -> Cmd Msg
 cancelStory csrfToken storyId =
-    storyActionRequest csrfToken <|
-        "/epics-api/stories/"
-            ++ String.fromInt storyId
-            ++ "/cancel/"
+    storyActionRequest csrfToken "cancel" storyId
 
 
 validateStory : String -> Int -> Cmd Msg
 validateStory csrfToken storyId =
-    storyActionRequest csrfToken <|
-        "/epics-api/stories/"
-            ++ String.fromInt storyId
-            ++ "/validate/"
+    storyActionRequest csrfToken "validate" storyId
 
 
 storyDecoder : JsonD.Decoder Epic_Stories__
