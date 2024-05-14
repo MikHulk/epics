@@ -29,7 +29,7 @@ type Msg
     | UserRemoveStatusFilter Status
     | UserRemoveAllFilters
     | UserUpdateTextSearch String
-    | UserActonStory StoryAction Story
+    | UserActonStory Story StoryAction
     | UserSelectStory Story
     | StoryChanged (Result Http.Error Epic_Stories__)
 
@@ -248,7 +248,7 @@ update msg state =
             , Cmd.none
             )
 
-        ( Ready model, UserActonStory action story ) ->
+        ( Ready model, UserActonStory story action ) ->
             ( state, actionStoryCmd model story action )
 
         ( Ready model, StoryChanged (Ok story) ) ->
@@ -526,10 +526,10 @@ storyItem username isOwner story =
             case story.status of
                 Created ->
                     if isOwner then
-                        [ takeButton (\action -> UserActonStory action story)
-                        , suspendButton (\action -> UserActonStory action story)
-                        , cancelButton (\action -> UserActonStory action story)
-                        , validateButton (\action -> UserActonStory action story)
+                        [ takeButton (UserActonStory story)
+                        , suspendButton (UserActonStory story)
+                        , cancelButton (UserActonStory story)
+                        , validateButton (UserActonStory story)
                         ]
 
                     else
@@ -539,17 +539,17 @@ storyItem username isOwner story =
                                     []
 
                                 else
-                                    [ takeButton (\action -> UserActonStory action story) ]
+                                    [ takeButton (UserActonStory story) ]
 
                             Nothing ->
-                                [ takeButton (\action -> UserActonStory action story) ]
+                                [ takeButton (UserActonStory story) ]
 
                 OnGoing ->
                     if isOwner then
-                        [ takeButton (\action -> UserActonStory action story)
-                        , suspendButton (\action -> UserActonStory action story)
-                        , cancelButton (\action -> UserActonStory action story)
-                        , validateButton (\action -> UserActonStory action story)
+                        [ takeButton (UserActonStory story)
+                        , suspendButton (UserActonStory story)
+                        , cancelButton (UserActonStory story)
+                        , validateButton (UserActonStory story)
                         ]
 
                     else
@@ -559,16 +559,16 @@ storyItem username isOwner story =
                                     []
 
                                 else
-                                    [ takeButton (\action -> UserActonStory action story) ]
+                                    [ takeButton (UserActonStory story) ]
 
                             Nothing ->
-                                [ takeButton (\action -> UserActonStory action story) ]
+                                [ takeButton (UserActonStory story) ]
 
                 Suspended ->
                     if isOwner then
-                        [ resumeButton (\action -> UserActonStory action story)
-                        , cancelButton (\action -> UserActonStory action story)
-                        , validateButton (\action -> UserActonStory action story)
+                        [ resumeButton (UserActonStory story)
+                        , cancelButton (UserActonStory story)
+                        , validateButton (UserActonStory story)
                         ]
 
                     else
