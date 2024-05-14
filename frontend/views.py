@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 from django.middleware.csrf import get_token
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -7,7 +8,7 @@ from django.views.decorators.cache import cache_control
 
 from django.http import HttpResponse
 
-from epics.models import Epic
+from epics.models import Epic, UserStory
 
 
 def with_logout(f):
@@ -32,19 +33,68 @@ def with_csrf(f):
     return g
 
 
+def with_username(f):
+    def g(request, *args, context=None, **kwargs):
+        username = request.user.username
+        if context:
+            context.setdefault("to_model", {})['username'] = username
+        else:
+            context = {'to_model': {'username': username}}
+        return f(request, *args, context=context, **kwargs)
+    return g
+
+
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @with_logout
 @with_csrf
+@with_username
+def story_view(request, story_id, *, context):
+    context['story_id'] = story_id
+    try:
+        story = (
+            UserStory.objects
+            .select_related('epic')
+            .select_related('epic__owner')
+            .select_related('epic__owner__user')
+            .get(pk=story_id)
+        )
+    except userStory.DoesNotExist:
+        raise Http404("Story does not exist")
+    context['to_model']['story'] = {
+        "id": story.pk,
+        "pubDate": story.pub_date.isoformat(),
+        "title": story.title,
+        "description": story.description,
+        "status": story.status,
+        "assignedTo": story.assigned_to and story.assigned_to.user.username or None,
+        "assignedToFullname": story.assigned_to and story.assigned_to.fullname or None
+    }
+    return render(
+        request,
+        "story.html",
+        context=context,
+    )
+
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
+@with_logout
+@with_csrf
+@with_username
 def epic_view(request, epic_id, *, context):
     url = f"{reverse('frontend:epic-detail', args=[epic_id])}"
-    epic = (
-        Epic.objects
-        .select_related('owner')
-        .prefetch_related('stories')
-        .get(pk=epic_id)
-    )
-    context["to_model"]["username"] = request.user.username
+    try:
+        epic = (
+            Epic.objects
+            .select_related('owner')
+            .select_related('owner__user')
+            .prefetch_related('stories')
+            .get(pk=epic_id)
+        )
+    except Epic.DoesNotExist:
+        raise Http404("Epic does not exist")
+    context["epic_id"] = epic_id
     context["to_model"]["epic"] = {
         "title": epic.title,
         "pubDate": epic.pub_date.isoformat(),

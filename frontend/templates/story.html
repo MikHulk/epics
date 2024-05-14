@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% load static %}
-{% load static landing_tags %}
+{% load static story_tags %}
 {% block head %}
-{% include_landing %}
+{% include_story %}
 {% endblock %}
 {% block content %}
 <header class="page-element">
-  <h1>The Epic App 😈</h1>
+  <h1>Story {{ story_id }}: {{ to_model.story.title }}</h1>
 </header>
-{% render_landing %}
+{% render_story %}
 {% endblock %}

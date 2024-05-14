@@ -7,4 +7,5 @@ app_name = "frontend"
 urlpatterns = [
     path("", views.landing_view, name='landing'),
     path("epic/<int:epic_id>", views.epic_view, name='epic-detail'),
+    path("story/<int:story_id>", views.story_view, name='story-detail'),
 ]

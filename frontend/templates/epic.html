@@ -6,8 +6,7 @@
 {% endblock %}
 {% block content %}
 <header class="page-element">
-  <h1>The Epic App 😈</h1>
+  <h1>Epic {{ epic_id }}: {{ to_model.epic.title }}</h1>
 </header>
 {% render_epic %}
-<footer class="page-element">Django + Elm = 🩵</footer>
 {% endblock %}

@@ -28,6 +28,7 @@ type Msg
     | UserRemoveAllFilters
     | UserUpdateTextSearch String
     | UserActonStory StoryAction Story
+    | UserSelectStory Story
     | StoryChanged (Result Http.Error Epic_Stories__)
 
 
@@ -85,6 +86,10 @@ type alias SessionInfo =
 type State
     = Ready Model
     | Error
+
+
+storyUrl =
+    "/story/"
 
 
 init : Value -> ( State, Cmd Msg )
@@ -294,6 +299,9 @@ update msg state =
             in
             ( Ready { model | error = Just m }, Cmd.none )
 
+        ( _, UserSelectStory story ) ->
+            ( state, Nav.load <| (++) storyUrl <| String.fromInt story.id )
+
         ( Error, _ ) ->
             ( state, Cmd.none )
 
@@ -371,8 +379,7 @@ view state =
                     , HtmlA.class "list-item"
                     , HtmlA.id "epic-detail"
                     ]
-                    [ Html.h1 [] [ Html.text model.epic.title ]
-                    , Html.p []
+                    [ Html.p []
                         [ Html.text model.epic.ownerFullname
                         , Html.text ", "
                         , Html.text model.epic.pubDate
@@ -558,6 +565,16 @@ storyItem username isOwner story =
                 ]
                 [ Html.text "✅" ]
 
+        viewButton =
+            Html.div
+                [ HtmlA.class "blue"
+                , HtmlA.style "font-size" "1.2em"
+                , HtmlA.style "margin-top" "-0.1em"
+                , HtmlA.style "cursor" "pointer"
+                , HtmlE.onClick <| UserSelectStory story
+                ]
+                [ Html.text "🔍" ]
+
         controlButtons =
             case story.status of
                 Created ->
@@ -608,8 +625,10 @@ storyItem username isOwner story =
         , Html.div
             [ HtmlA.class "story-control" ]
           <|
-            (Html.text <| "Status: " ++ statusToString story.status)
-                :: controlButtons
+            Html.div
+                [ HtmlA.style "width" "10em" ]
+                [ Html.text <| "Status: " ++ statusToString story.status ]
+                :: (viewButton :: controlButtons)
         , case story.assignedToFullname of
             Just s ->
                 Html.p [] [ Html.text <| "assigned to: " ++ s ]
