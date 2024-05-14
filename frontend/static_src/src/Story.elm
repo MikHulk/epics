@@ -13,6 +13,7 @@ import Models.Story exposing (ToModel, toModel)
 
 type Msg
     = UserReturnsHome
+    | UserReturnsToEpic
 
 
 type State
@@ -48,10 +49,13 @@ subscriptions _ =
 update : Msg -> State -> ( State, Cmd Msg )
 update msg state =
     case state of
-        Ready m ->
+        Ready model ->
             case msg of
                 UserReturnsHome ->
                     ( state, Nav.load "/" )
+
+                UserReturnsToEpic ->
+                    ( state, Nav.load model.story.epic.url )
 
         _ ->
             ( state, Cmd.none )
@@ -72,13 +76,30 @@ view state =
                         , HtmlE.onClick UserReturnsHome
                         ]
                         [ Html.text "Home" ]
+                    , Html.button
+                        [ HtmlA.class "blue"
+                        , HtmlE.onClick UserReturnsToEpic
+                        ]
+                        [ Html.text "To Epic" ]
                     , logoutForm model.csrfToken model.logoutUrl
                     ]
                 , Html.div
                     [ HtmlA.class "head-container"
                     , HtmlA.class "container"
                     ]
-                    [ Html.div [] <|
+                    [ Html.p []
+                        [ Html.text <|
+                            model.story.pubDate
+                                ++ ", "
+                                ++ model.story.status
+                        ]
+                    , case model.story.assignedToFullname of
+                        Just name ->
+                            Html.p [] [ Html.text <| "Assigned to: " ++ name ]
+
+                        Nothing ->
+                            Html.text ""
+                    , Html.div [] <|
                         List.map
                             (\l -> Html.p [ HtmlA.class "description" ] [ Html.text l ])
                         <|

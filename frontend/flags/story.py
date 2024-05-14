@@ -21,6 +21,13 @@ StoryFlags = Flags(
                     "status": StringFlag(),
                     "assignedTo": NullableFlag(StringFlag()),
                     "assignedToFullname": NullableFlag(StringFlag()),
+                    "epic": ObjectFlag(
+                        {
+                            "title": StringFlag(),
+                            "id": IntFlag(),
+                            "url": StringFlag(),
+                        }
+                    )
                 }
             ),
             "logoutUrl": StringFlag(),

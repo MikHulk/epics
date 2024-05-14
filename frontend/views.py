@@ -68,7 +68,12 @@ def story_view(request, story_id, *, context):
         "description": story.description,
         "status": story.status,
         "assignedTo": story.assigned_to and story.assigned_to.user.username or None,
-        "assignedToFullname": story.assigned_to and story.assigned_to.fullname or None
+        "assignedToFullname": story.assigned_to and story.assigned_to.fullname or None,
+        "epic": {
+            "title": story.epic.title,
+            "id": story.epic.pk,
+            "url": f"{reverse('frontend:epic-detail', args=[story.epic.pk])}",
+        }
     }
     return render(
         request,

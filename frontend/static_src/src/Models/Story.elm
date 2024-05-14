@@ -23,6 +23,13 @@ type alias Story_ =
     , status : String
     , assignedTo : Maybe String
     , assignedToFullname : Maybe String
+    , epic : Story_Epic__
+    }
+
+type alias Story_Epic__ =
+    { title : String
+    , id : Int
+    , url : String
     }
 
 
@@ -44,3 +51,11 @@ story_Decoder =
         |> required "status" Decode.string
         |> required "assignedTo" (Decode.nullable Decode.string)
         |> required "assignedToFullname" (Decode.nullable Decode.string)
+        |> required "epic" story_epic__Decoder
+
+story_epic__Decoder : Decode.Decoder Story_Epic__
+story_epic__Decoder =
+    Decode.succeed Story_Epic__
+        |> required "title" Decode.string
+        |> required "id" Decode.int
+        |> required "url" Decode.string
