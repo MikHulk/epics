@@ -2,7 +2,17 @@ module Epic exposing (..)
 
 import Browser
 import Browser.Navigation as Nav
-import Common exposing (logoutForm)
+import Common
+    exposing
+        ( StoryAction(..)
+        , cancelButton
+        , ctrlButton
+        , logoutForm
+        , resumeButton
+        , suspendButton
+        , takeButton
+        , validateButton
+        )
 import Html
 import Html.Attributes as HtmlA
 import Html.Events as HtmlE
@@ -10,14 +20,6 @@ import Http
 import Json.Decode as JsonD
 import Json.Encode exposing (Value)
 import Models.Epic exposing (Epic_, Epic_Stories__, ToModel, toModel)
-
-
-type StoryAction
-    = Take
-    | Suspend
-    | Resume
-    | Cancel
-    | Validate
 
 
 type Msg
@@ -515,71 +517,20 @@ storiesView username isOwner model =
 storyItem : String -> Bool -> Story -> Html.Html Msg
 storyItem username isOwner story =
     let
-        takeButton =
-            Html.div
-                [ HtmlA.class "blue"
-                , HtmlA.style "font-size" "1.2em"
-                , HtmlA.style "margin-top" "-0.1em"
-                , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserActonStory Take story
-                ]
-                [ Html.text "⛏" ]
-
-        suspendButton =
-            Html.div
-                [ HtmlA.class "blue"
-                , HtmlA.style "font-size" "1.2em"
-                , HtmlA.style "margin-top" "-0.1em"
-                , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserActonStory Suspend story
-                ]
-                [ Html.text "✋" ]
-
-        resumeButton =
-            Html.div
-                [ HtmlA.class "blue"
-                , HtmlA.style "font-size" "1.2em"
-                , HtmlA.style "margin-top" "-0.1em"
-                , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserActonStory Resume story
-                ]
-                [ Html.text "✨" ]
-
-        cancelButton =
-            Html.div
-                [ HtmlA.class "blue"
-                , HtmlA.style "font-size" "1.2em"
-                , HtmlA.style "margin-top" "-0.1em"
-                , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserActonStory Cancel story
-                ]
-                [ Html.text "❌" ]
-
-        validateButton =
-            Html.div
-                [ HtmlA.class "blue"
-                , HtmlA.style "font-size" "1.2em"
-                , HtmlA.style "margin-top" "-0.1em"
-                , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserActonStory Validate story
-                ]
-                [ Html.text "✅" ]
-
         viewButton =
-            Html.div
-                [ HtmlA.class "blue"
-                , HtmlA.style "font-size" "1.2em"
-                , HtmlA.style "margin-top" "-0.1em"
-                , HtmlA.style "cursor" "pointer"
-                , HtmlE.onClick <| UserSelectStory story
-                ]
+            ctrlButton
+                (UserSelectStory story)
                 [ Html.text "🔍" ]
 
         controlButtons =
             case story.status of
                 Created ->
                     if isOwner then
-                        [ takeButton, suspendButton, cancelButton, validateButton ]
+                        [ takeButton (\action -> UserActonStory action story)
+                        , suspendButton (\action -> UserActonStory action story)
+                        , cancelButton (\action -> UserActonStory action story)
+                        , validateButton (\action -> UserActonStory action story)
+                        ]
 
                     else
                         case story.assignedTo of
@@ -588,14 +539,18 @@ storyItem username isOwner story =
                                     []
 
                                 else
-                                    [ takeButton ]
+                                    [ takeButton (\action -> UserActonStory action story) ]
 
                             Nothing ->
-                                [ takeButton ]
+                                [ takeButton (\action -> UserActonStory action story) ]
 
                 OnGoing ->
                     if isOwner then
-                        [ takeButton, suspendButton, cancelButton, validateButton ]
+                        [ takeButton (\action -> UserActonStory action story)
+                        , suspendButton (\action -> UserActonStory action story)
+                        , cancelButton (\action -> UserActonStory action story)
+                        , validateButton (\action -> UserActonStory action story)
+                        ]
 
                     else
                         case story.assignedTo of
@@ -604,14 +559,17 @@ storyItem username isOwner story =
                                     []
 
                                 else
-                                    [ takeButton ]
+                                    [ takeButton (\action -> UserActonStory action story) ]
 
                             Nothing ->
-                                [ takeButton ]
+                                [ takeButton (\action -> UserActonStory action story) ]
 
                 Suspended ->
                     if isOwner then
-                        [ resumeButton, cancelButton, validateButton ]
+                        [ resumeButton (\action -> UserActonStory action story)
+                        , cancelButton (\action -> UserActonStory action story)
+                        , validateButton (\action -> UserActonStory action story)
+                        ]
 
                     else
                         []
