@@ -73,6 +73,7 @@ def story_view(request, story_id, *, context):
             "title": story.epic.title,
             "id": story.epic.pk,
             "url": f"{reverse('frontend:epic-detail', args=[story.epic.pk])}",
+            "owner": story.epic.owner.user.username,
         }
     }
     return render(

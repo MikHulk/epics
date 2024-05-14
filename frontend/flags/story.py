@@ -26,6 +26,7 @@ StoryFlags = Flags(
                             "title": StringFlag(),
                             "id": IntFlag(),
                             "url": StringFlag(),
+                            "owner": StringFlag(),
                         }
                     )
                 }

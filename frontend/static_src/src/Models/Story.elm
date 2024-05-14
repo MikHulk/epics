@@ -30,6 +30,7 @@ type alias Story_Epic__ =
     { title : String
     , id : Int
     , url : String
+    , owner : String
     }
 
 
@@ -59,3 +60,4 @@ story_epic__Decoder =
         |> required "title" Decode.string
         |> required "id" Decode.int
         |> required "url" Decode.string
+        |> required "owner" Decode.string
