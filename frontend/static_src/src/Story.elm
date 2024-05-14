@@ -63,9 +63,9 @@ update msg state =
 
 view : State -> Html.Html Msg
 view state =
-    case state of
-        Ready model ->
-            Html.main_ []
+    Html.main_ [] <|
+        case state of
+            Ready model ->
                 [ Html.div
                     [ HtmlA.class "head-container"
                     , HtmlA.class "toolbar"
@@ -107,5 +107,8 @@ view state =
                     ]
                 ]
 
-        _ ->
-            Html.text ""
+            _ ->
+                [ Html.div
+                    [ HtmlA.class "error-msg" ]
+                    [ Html.text "SPA error" ]
+                ]

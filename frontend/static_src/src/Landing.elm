@@ -24,8 +24,7 @@ init f =
             )
 
         Err _ ->
-            ( Error "Server error "
-            , Cmd.none
+            ( Error, Cmd.none
             )
 
 
@@ -79,7 +78,7 @@ type alias Epics =
 
 type AppState
     = Ready Model
-    | Error String
+    | Error
 
 
 
@@ -174,11 +173,10 @@ view state =
                 , epicsView model.epics
                 ]
 
-            Error s ->
+            Error ->
                 [ Html.div
-                    [ HtmlA.class "error-msg"
-                    ]
-                    [ Html.text s ]
+                  [ HtmlA.class "error-msg" ]
+                  [ Html.text "SPA error" ]
                 ]
 
 

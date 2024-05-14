@@ -396,10 +396,10 @@ view state =
                     model.stories
                 ]
 
-        _ ->
+        Error ->
             Html.div
                 [ HtmlA.class "error-msg" ]
-                [ Html.text "Server error" ]
+                [ Html.text "SPA error" ]
 
 
 errorMsg : Model -> String -> Html.Html Msg
