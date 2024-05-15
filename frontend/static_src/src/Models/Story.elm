@@ -5,7 +5,7 @@ module Models.Story exposing (..)
 -}
 
 import Json.Decode as Decode
-import Json.Decode.Pipeline exposing (required, optional, hardcoded)
+import Json.Decode.Pipeline exposing (hardcoded, optional, required)
 
 
 type alias ToModel =
@@ -14,6 +14,7 @@ type alias ToModel =
     , csrfToken : String
     , username : String
     }
+
 
 type alias Story_ =
     { id : Int
@@ -25,6 +26,7 @@ type alias Story_ =
     , assignedToFullname : Maybe String
     , epic : Story_Epic__
     }
+
 
 type alias Story_Epic__ =
     { title : String
@@ -42,6 +44,7 @@ toModel =
         |> required "csrfToken" Decode.string
         |> required "username" Decode.string
 
+
 story_Decoder : Decode.Decoder Story_
 story_Decoder =
     Decode.succeed Story_
@@ -53,6 +56,7 @@ story_Decoder =
         |> required "assignedTo" (Decode.nullable Decode.string)
         |> required "assignedToFullname" (Decode.nullable Decode.string)
         |> required "epic" story_epic__Decoder
+
 
 story_epic__Decoder : Decode.Decoder Story_Epic__
 story_epic__Decoder =

@@ -6,6 +6,7 @@ module Common exposing
     , cancelStory
     , ctrlButton
     , logoutForm
+    , refreshStory
     , resumeButton
     , resumeStory
     , suspendButton
@@ -56,6 +57,7 @@ ctrlButton msg content =
     Html.div
         [ HtmlA.class "blue"
         , HtmlA.style "font-size" "1.2em"
+        , HtmlA.style "height" "1em"
         , HtmlA.style "margin-top" "-0.1em"
         , HtmlA.style "cursor" "pointer"
         , HtmlE.onClick msg
@@ -171,6 +173,17 @@ storyActionRequest msg csrfToken action storyId =
         , expect = expectJson msg storyDecoder
         , timeout = Nothing
         , tracker = Nothing
+        }
+
+
+refreshStory :
+    (Result ApiError StoryChange -> msg)
+    -> Int
+    -> Cmd msg
+refreshStory msg storyId =
+    Http.get
+        { url = "/epics-api/stories/" ++ String.fromInt storyId ++ "/"
+        , expect = expectJson msg storyDecoder
         }
 
 

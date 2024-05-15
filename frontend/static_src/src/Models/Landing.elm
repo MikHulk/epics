@@ -5,7 +5,7 @@ module Models.Landing exposing (..)
 -}
 
 import Json.Decode as Decode
-import Json.Decode.Pipeline exposing (required, optional, hardcoded)
+import Json.Decode.Pipeline exposing (hardcoded, optional, required)
 
 
 type alias ToModel =
@@ -15,6 +15,7 @@ type alias ToModel =
     , epics : List Epics_
     }
 
+
 type alias UserInfo_ =
     { fullname : String
     , name : String
@@ -23,6 +24,7 @@ type alias UserInfo_ =
     , email : Maybe String
     , isStaff : Bool
     }
+
 
 type alias Epics_ =
     { title : String
@@ -42,6 +44,7 @@ toModel =
         |> required "logoutUrl" Decode.string
         |> required "epics" (Decode.list epics_Decoder)
 
+
 userInfo_Decoder : Decode.Decoder UserInfo_
 userInfo_Decoder =
     Decode.succeed UserInfo_
@@ -51,6 +54,7 @@ userInfo_Decoder =
         |> required "lastName" (Decode.nullable Decode.string)
         |> required "email" (Decode.nullable Decode.string)
         |> required "isStaff" Decode.bool
+
 
 epics_Decoder : Decode.Decoder Epics_
 epics_Decoder =

@@ -11,6 +11,7 @@ import Common
         , cancelStory
         , ctrlButton
         , logoutForm
+        , refreshStory
         , resumeButton
         , resumeStory
         , suspendButton
@@ -38,7 +39,7 @@ type Msg
     | UserUpdateTextSearch String
     | UserActonStory Story StoryAction
     | UserSelectStory Story
-    | StoryChanged (Result ApiError StoryChange)
+    | StoryChanged (Maybe Int) (Result ApiError StoryChange)
 
 
 type alias Epic =
@@ -178,7 +179,7 @@ actionStoryCmd model story action =
                 Validate ->
                     validateStory
     in
-    cmd StoryChanged model.session.csrfToken story.id
+    cmd (StoryChanged <| Just story.id) model.session.csrfToken story.id
 
 
 update : Msg -> State -> ( State, Cmd Msg )
@@ -258,7 +259,7 @@ update msg state =
         ( Ready model, UserActonStory story action ) ->
             ( state, actionStoryCmd model story action )
 
-        ( Ready model, StoryChanged (Ok story) ) ->
+        ( Ready model, StoryChanged _ (Ok story) ) ->
             let
                 newStatus =
                     statusFromString story.status
@@ -286,30 +287,44 @@ update msg state =
             in
             ( Ready { model | stories = { stories | stories = newStories } }, Cmd.none )
 
-        ( Ready model, StoryChanged (Err e) ) ->
+        ( Ready model, StoryChanged optStoryId (Err e) ) ->
             let
-                m =
-                    (++) "Error on story action, " <|
-                        case e of
-                            BadUrl s ->
-                                "Bad URL: " ++ s
+                ( m, cmd ) =
+                    case e of
+                        BadUrl s ->
+                            ( "Bad URL: " ++ s, Cmd.none )
 
-                            Timeout ->
-                                "Time out"
+                        Timeout ->
+                            ( "Time out", Cmd.none )
 
-                            NetworkError ->
-                                "Network error"
+                        NetworkError ->
+                            ( "Network error", Cmd.none )
 
-                            BadStatus code ->
-                                "Bad Status: " ++ String.fromInt code
+                        BadStatus code ->
+                            ( "Bad Status: " ++ String.fromInt code, Cmd.none )
 
-                            DomainError reason ->
-                                reason
+                        DomainError reason ->
+                            case optStoryId of
+                                Just storyId ->
+                                    ( reason
+                                    , refreshStory (StoryChanged Nothing) storyId
+                                    )
 
-                            BadBody s ->
-                                "Bad body: " ++ s
+                                Nothing ->
+                                    ( reason, Cmd.none )
+
+                        BadBody s ->
+                            ( "Bad body: " ++ s, Cmd.none )
             in
-            ( Ready { model | error = Just m }, Cmd.none )
+            ( Ready
+                { model
+                    | error =
+                        Just <|
+                            "Error on story action, "
+                                ++ m
+                }
+            , cmd
+            )
 
         ( _, UserSelectStory story ) ->
             ( state, Nav.load <| (++) storyUrl <| String.fromInt story.id )
@@ -607,4 +622,3 @@ storyItem username isOwner story =
             [ HtmlA.class "item-description" ]
             [ Html.text story.description ]
         ]
-

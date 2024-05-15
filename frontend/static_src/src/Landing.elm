@@ -24,7 +24,8 @@ init f =
             )
 
         Err _ ->
-            ( Error, Cmd.none
+            ( Error
+            , Cmd.none
             )
 
 
@@ -175,8 +176,8 @@ view state =
 
             Error ->
                 [ Html.div
-                  [ HtmlA.class "error-msg" ]
-                  [ Html.text "SPA error" ]
+                    [ HtmlA.class "error-msg" ]
+                    [ Html.text "SPA error" ]
                 ]
 
 

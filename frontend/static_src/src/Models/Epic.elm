@@ -5,7 +5,7 @@ module Models.Epic exposing (..)
 -}
 
 import Json.Decode as Decode
-import Json.Decode.Pipeline exposing (required, optional, hardcoded)
+import Json.Decode.Pipeline exposing (hardcoded, optional, required)
 
 
 type alias ToModel =
@@ -15,6 +15,7 @@ type alias ToModel =
     , username : String
     }
 
+
 type alias Epic_ =
     { title : String
     , pubDate : String
@@ -23,6 +24,7 @@ type alias Epic_ =
     , owner : String
     , stories : List Epic_Stories__
     }
+
 
 type alias Epic_Stories__ =
     { id : Int
@@ -43,6 +45,7 @@ toModel =
         |> required "csrfToken" Decode.string
         |> required "username" Decode.string
 
+
 epic_Decoder : Decode.Decoder Epic_
 epic_Decoder =
     Decode.succeed Epic_
@@ -52,6 +55,7 @@ epic_Decoder =
         |> required "ownerFullname" Decode.string
         |> required "owner" Decode.string
         |> required "stories" (Decode.list epic_stories__Decoder)
+
 
 epic_stories__Decoder : Decode.Decoder Epic_Stories__
 epic_stories__Decoder =

@@ -11,6 +11,7 @@ import Common
         , cancelStory
         , ctrlButton
         , logoutForm
+        , refreshStory
         , resumeButton
         , resumeStory
         , suspendButton
@@ -147,28 +148,35 @@ update msg state =
 
                 StoryChanged (Err e) ->
                     let
-                        m =
-                            (++) "Error on story action, " <|
-                                case e of
-                                    BadUrl s ->
-                                        "Bad URL: " ++ s
+                        ( m, cmd ) =
+                            case e of
+                                BadUrl s ->
+                                    ( "Bad URL: " ++ s, Cmd.none )
 
-                                    Timeout ->
-                                        "Time out"
+                                Timeout ->
+                                    ( "Time out", Cmd.none )
 
-                                    NetworkError ->
-                                        "Network error"
+                                NetworkError ->
+                                    ( "Network error", Cmd.none )
 
-                                    BadStatus code ->
-                                        "Bad Status: " ++ String.fromInt code
+                                BadStatus code ->
+                                    ( "Bad Status: " ++ String.fromInt code, Cmd.none )
 
-                                    DomainError reason ->
-                                        reason
+                                DomainError reason ->
+                                    ( reason, refreshStory StoryChanged model.story.id )
 
-                                    BadBody s ->
-                                        "Bad body: " ++ s
+                                BadBody s ->
+                                    ( "Bad body: " ++ s, Cmd.none )
                     in
-                    ( Ready { model | error = Just m }, Cmd.none )
+                    ( Ready
+                        { model
+                            | error =
+                                Just <|
+                                    "Error on story action, "
+                                        ++ m
+                        }
+                    , cmd
+                    )
 
         _ ->
             ( state, Cmd.none )
