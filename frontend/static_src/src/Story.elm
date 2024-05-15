@@ -4,13 +4,21 @@ import Browser
 import Browser.Navigation as Nav
 import Common
     exposing
-        ( StoryAction(..)
+        ( ApiError(..)
+        , StoryAction(..)
+        , StoryChange
         , cancelButton
+        , cancelStory
+        , ctrlButton
         , logoutForm
         , resumeButton
+        , resumeStory
         , suspendButton
+        , suspendStory
         , takeButton
+        , takeStory
         , validateButton
+        , validateStory
         )
 import Html
 import Html.Attributes as HtmlA
@@ -21,22 +29,12 @@ import Json.Encode as JsonE
 import Models.Story exposing (Story_, ToModel, toModel)
 
 
-type alias StoryChange =
-    { id : Int
-    , pubDate : String
-    , title : String
-    , description : String
-    , status : String
-    , assignedTo : Maybe String
-    , assignedToFullname : Maybe String
-    }
-
-
 type Msg
     = UserReturnsHome
+    | UserCleanError
     | UserReturnsToEpic
     | UserActonStory StoryAction
-    | StoryChanged (Result Http.Error StoryChange)
+    | StoryChanged (Result ApiError StoryChange)
 
 
 type alias Model =
@@ -106,7 +104,7 @@ actionStoryCmd model action =
                 Validate ->
                     validateStory
     in
-    cmd model.csrfToken model.story.id
+    cmd StoryChanged model.csrfToken model.story.id
 
 
 update : Msg -> State -> ( State, Cmd Msg )
@@ -116,6 +114,9 @@ update msg state =
             case msg of
                 UserReturnsHome ->
                     ( state, Nav.load "/" )
+
+                UserCleanError ->
+                    ( Ready { model | error = Nothing }, Cmd.none )
 
                 UserReturnsToEpic ->
                     ( state, Nav.load model.story.epic.url )
@@ -149,19 +150,22 @@ update msg state =
                         m =
                             (++) "Error on story action, " <|
                                 case e of
-                                    Http.BadUrl s ->
+                                    BadUrl s ->
                                         "Bad URL: " ++ s
 
-                                    Http.Timeout ->
+                                    Timeout ->
                                         "Time out"
 
-                                    Http.NetworkError ->
+                                    NetworkError ->
                                         "Network error"
 
-                                    Http.BadStatus code ->
+                                    BadStatus code ->
                                         "Bad Status: " ++ String.fromInt code
 
-                                    Http.BadBody s ->
+                                    DomainError reason ->
+                                        reason
+
+                                    BadBody s ->
                                         "Bad body: " ++ s
                     in
                     ( Ready { model | error = Just m }, Cmd.none )
@@ -256,6 +260,12 @@ view state =
                      ]
                         ++ controlButtons
                     )
+                , case model.error of
+                    Nothing ->
+                        Html.text ""
+
+                    Just reason ->
+                        errorMsg model reason
                 , Html.div
                     [ HtmlA.class "head-container"
                     , HtmlA.class "container"
@@ -287,59 +297,19 @@ view state =
                 ]
 
 
-
--- HTTP
-
-
-storyActionRequest : String -> String -> Int -> Cmd Msg
-storyActionRequest csrfToken action storyId =
-    Http.request
-        { method = "PUT"
-        , headers = [ Http.header "X-CSRFToken" csrfToken ]
-        , url = "/epics-api/stories/" ++ String.fromInt storyId ++ "/" ++ action ++ "/"
-        , body = Http.emptyBody
-        , expect = Http.expectJson StoryChanged storyDecoder
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
-takeStory : String -> Int -> Cmd Msg
-takeStory csrfToken storyId =
-    storyActionRequest csrfToken "take" storyId
-
-
-suspendStory : String -> Int -> Cmd Msg
-suspendStory csrfToken storyId =
-    storyActionRequest csrfToken "suspend" storyId
-
-
-resumeStory : String -> Int -> Cmd Msg
-resumeStory csrfToken storyId =
-    storyActionRequest csrfToken "resume" storyId
-
-
-cancelStory : String -> Int -> Cmd Msg
-cancelStory csrfToken storyId =
-    storyActionRequest csrfToken "cancel" storyId
-
-
-validateStory : String -> Int -> Cmd Msg
-validateStory csrfToken storyId =
-    storyActionRequest csrfToken "validate" storyId
-
-
-storyDecoder : JsonD.Decoder StoryChange
-storyDecoder =
-    JsonD.map7 StoryChange
-        (JsonD.field "id" JsonD.int)
-        (JsonD.field "pub_date" JsonD.string)
-        (JsonD.field "title" JsonD.string)
-        (JsonD.field "description" JsonD.string)
-        (JsonD.field "status" JsonD.string)
-        (JsonD.field "assigned_to"
-            (JsonD.nullable (JsonD.field "user" (JsonD.field "username" JsonD.string)))
-        )
-        (JsonD.field "assigned_to"
-            (JsonD.nullable (JsonD.field "fullname" JsonD.string))
-        )
+errorMsg : Model -> String -> Html.Html Msg
+errorMsg model reason =
+    Html.div
+        [ HtmlA.class "error-msg" ]
+        [ Html.div [] [ Html.text reason ]
+        , Html.div
+            [ HtmlA.style "background-color" "#a61e1e"
+            , HtmlA.style "color" "black"
+            , HtmlA.style "height" "1em"
+            , HtmlA.style "padding" "0px 4px 4px"
+            , HtmlA.style "font-size" "1em"
+            , HtmlA.style "cursor" "pointer"
+            , HtmlE.onClick UserCleanError
+            ]
+            [ Html.text "✘" ]
+        ]

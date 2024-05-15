@@ -4,14 +4,21 @@ import Browser
 import Browser.Navigation as Nav
 import Common
     exposing
-        ( StoryAction(..)
+        ( ApiError(..)
+        , StoryAction(..)
+        , StoryChange
         , cancelButton
+        , cancelStory
         , ctrlButton
         , logoutForm
         , resumeButton
+        , resumeStory
         , suspendButton
+        , suspendStory
         , takeButton
+        , takeStory
         , validateButton
+        , validateStory
         )
 import Html
 import Html.Attributes as HtmlA
@@ -31,7 +38,7 @@ type Msg
     | UserUpdateTextSearch String
     | UserActonStory Story StoryAction
     | UserSelectStory Story
-    | StoryChanged (Result Http.Error Epic_Stories__)
+    | StoryChanged (Result ApiError StoryChange)
 
 
 type alias Epic =
@@ -171,7 +178,7 @@ actionStoryCmd model story action =
                 Validate ->
                     validateStory
     in
-    cmd model.session.csrfToken story.id
+    cmd StoryChanged model.session.csrfToken story.id
 
 
 update : Msg -> State -> ( State, Cmd Msg )
@@ -284,19 +291,22 @@ update msg state =
                 m =
                     (++) "Error on story action, " <|
                         case e of
-                            Http.BadUrl s ->
+                            BadUrl s ->
                                 "Bad URL: " ++ s
 
-                            Http.Timeout ->
+                            Timeout ->
                                 "Time out"
 
-                            Http.NetworkError ->
+                            NetworkError ->
                                 "Network error"
 
-                            Http.BadStatus code ->
+                            BadStatus code ->
                                 "Bad Status: " ++ String.fromInt code
 
-                            Http.BadBody s ->
+                            DomainError reason ->
+                                reason
+
+                            BadBody s ->
                                 "Bad body: " ++ s
             in
             ( Ready { model | error = Just m }, Cmd.none )
@@ -598,60 +608,3 @@ storyItem username isOwner story =
             [ Html.text story.description ]
         ]
 
-
-
--- HTTP
-
-
-storyActionRequest : String -> String -> Int -> Cmd Msg
-storyActionRequest csrfToken action storyId =
-    Http.request
-        { method = "PUT"
-        , headers = [ Http.header "X-CSRFToken" csrfToken ]
-        , url = "/epics-api/stories/" ++ String.fromInt storyId ++ "/" ++ action ++ "/"
-        , body = Http.emptyBody
-        , expect = Http.expectJson StoryChanged storyDecoder
-        , timeout = Nothing
-        , tracker = Nothing
-        }
-
-
-takeStory : String -> Int -> Cmd Msg
-takeStory csrfToken storyId =
-    storyActionRequest csrfToken "take" storyId
-
-
-suspendStory : String -> Int -> Cmd Msg
-suspendStory csrfToken storyId =
-    storyActionRequest csrfToken "suspend" storyId
-
-
-resumeStory : String -> Int -> Cmd Msg
-resumeStory csrfToken storyId =
-    storyActionRequest csrfToken "resume" storyId
-
-
-cancelStory : String -> Int -> Cmd Msg
-cancelStory csrfToken storyId =
-    storyActionRequest csrfToken "cancel" storyId
-
-
-validateStory : String -> Int -> Cmd Msg
-validateStory csrfToken storyId =
-    storyActionRequest csrfToken "validate" storyId
-
-
-storyDecoder : JsonD.Decoder Epic_Stories__
-storyDecoder =
-    JsonD.map7 Epic_Stories__
-        (JsonD.field "id" JsonD.int)
-        (JsonD.field "pub_date" JsonD.string)
-        (JsonD.field "title" JsonD.string)
-        (JsonD.field "description" JsonD.string)
-        (JsonD.field "status" JsonD.string)
-        (JsonD.field "assigned_to"
-            (JsonD.nullable (JsonD.field "user" (JsonD.field "username" JsonD.string)))
-        )
-        (JsonD.field "assigned_to"
-            (JsonD.nullable (JsonD.field "fullname" JsonD.string))
-        )
