@@ -1,4 +1,4 @@
-- [ ] epic creation form
+- [x] epic creation form
 - [ ] story creation form
 - [ ] epic modification form
 - [ ] story modification form 

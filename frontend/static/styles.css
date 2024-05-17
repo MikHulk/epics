@@ -117,6 +117,23 @@ button {
   justify-content: space-between;
 }
 
+.form-container {
+  padding: 11px 8px;
+  display: grid;
+}
+
+.form-container > div {
+  padding: 5px 0;
+  display: grid;
+}
+
+.form-container > button {
+  font-size: 1em;
+  justify-self: end;
+}
+
+
+
 .head-container {
   font-size: larger;
   padding: 6px 8px;
@@ -181,6 +198,10 @@ button {
 
 .scrollable-list > div:nth-child(even) {
   background-color: #46444f;
+}
+
+.space {
+  height: 100%;
 }
 
 .story-control {

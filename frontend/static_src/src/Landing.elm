@@ -46,6 +46,7 @@ main =
 type Msg
     = UserWantsHisEpics
     | UserWantsAllEpics
+    | UserCreateNewEpic
     | UserSearchForText String
     | UserSelectEpic String
 
@@ -160,6 +161,9 @@ update msg state =
         UserSelectEpic url ->
             ( state, Nav.load url )
 
+        UserCreateNewEpic ->
+            ( state, Nav.load "/new-epic")
+
 
 
 -- VIEW
@@ -229,7 +233,7 @@ epicsView model =
                 Just _ ->
                     Html.button
                         [ HtmlE.onClick UserWantsAllEpics
-                        , HtmlA.class "blue"
+                        , HtmlA.class "bg-green"
                         ]
                         [ Html.text "All epics" ]
 
@@ -245,6 +249,11 @@ epicsView model =
         [ Html.div
             [ HtmlA.class "container-toolbar" ]
             [ filterSwitch
+            , Html.button
+                [ HtmlE.onClick UserCreateNewEpic
+                , HtmlA.class "blue"
+                ]
+                [ Html.text "New epic" ]
             , Html.input
                 [ HtmlE.onInput UserSearchForText
                 ]

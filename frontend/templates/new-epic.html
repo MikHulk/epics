@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+{% block head %}
+{% endblock %}
+{% block content %}
+<header class="page-element">
+  <h1>New epic</h1>
+</header>
+<main>
+  <div class="head-container toolbar container">
+    <button class="green" onclick="location.href='/'">Home</button>
+    <form action="{% url 'rest_framework:logout' %}?next=/" method="post">
+      {% csrf_token %}
+      <button type="submit" class="red">Log out</button>
+    </form>
+  </div>
+  <div class="space">
+    <form  class="container form-container" method="post">
+      {% csrf_token %}
+      {{ form }}
+      <button type="submit" class="green" formenctype="multipart/form-data">
+        Submit
+      </button>
+    </form>
+  </div>
+</main>
+{% endblock %}

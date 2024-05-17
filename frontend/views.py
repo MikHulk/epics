@@ -1,14 +1,14 @@
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import Http404
+from django.http import HttpResponse, Http404
 from django.middleware.csrf import get_token
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views.decorators.cache import cache_control
 
-from django.http import HttpResponse
-
 from epics.models import Epic, UserStory
+
+from . import forms
 
 
 def with_logout(f):
@@ -85,10 +85,30 @@ def story_view(request, story_id, *, context):
 
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def new_epic(request):
+    context = {}
+    if request.method == "POST":
+        form = forms.EpicForm(request.POST)
+        if form.is_valid():
+            epic = request.user.contributor.new_epic(**form.cleaned_data)
+            return redirect(reverse('frontend:epic-detail', args=[epic.pk]))
+    else:
+        form = forms.EpicForm()
+    context['form'] = form
+    return render(
+        request,
+        "new-epic.html",
+        context=context,
+    )
+
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @with_logout
 @with_csrf
 @with_username
 def epic_view(request, epic_id, *, context):
+    context = context or {}
     url = f"{reverse('frontend:epic-detail', args=[epic_id])}"
     try:
         epic = (
@@ -131,6 +151,7 @@ def epic_view(request, epic_id, *, context):
 @with_logout
 @with_csrf
 def landing_view(request, *, context):
+    context = context or {}
     epics = [
         {"title": epic.title,
          "pubDate": epic.pub_date.isoformat(),
@@ -138,7 +159,12 @@ def landing_view(request, *, context):
          "ownerFullname": epic.owner.fullname,
          "owner": epic.owner.user.username,
          "url": reverse('frontend:epic-detail', args=[epic.pk]),
-         } for epic in Epic.objects.select_related("owner").select_related("owner__user")
+         } for epic in (
+             Epic.objects
+             .order_by('-pub_date')
+             .select_related("owner")
+             .select_related("owner__user")
+        )
     ]
     context["to_model"]["userInfo"] = {
         "fullname": request.user.contributor.fullname,
