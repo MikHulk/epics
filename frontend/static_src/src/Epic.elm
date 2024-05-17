@@ -39,11 +39,13 @@ type Msg
     | UserUpdateTextSearch String
     | UserActonStory Story StoryAction
     | UserSelectStory Story
+    | UserCreateNewStory
     | StoryChanged (Maybe Int) (Result ApiError StoryChange)
 
 
 type alias Epic =
-    { title : String
+    { id: Int
+    , title : String
     , pubDate : String
     , description : String
     , ownerFullname : String
@@ -124,7 +126,8 @@ init f =
                         , username = m.username
                         }
                     , epic =
-                        { title = m.epic.title
+                        { id = m.epic.id
+                        , title = m.epic.title
                         , pubDate = m.epic.pubDate
                         , description = m.epic.description
                         , ownerFullname = m.epic.ownerFullname
@@ -187,6 +190,11 @@ update msg state =
     case ( state, msg ) of
         ( Ready _, UserReturnsHome ) ->
             ( state, Nav.load "/" )
+
+        ( Ready model, UserCreateNewStory ) ->
+            ( state
+            , Nav.load <| "/epic/" ++ String.fromInt model.epic.id ++ "/new-story/"
+            )
 
         ( Ready model, UserCleanError ) ->
             ( Ready { model | error = Nothing }, Cmd.none )
@@ -393,6 +401,15 @@ view state =
                         , HtmlE.onClick UserReturnsHome
                         ]
                         [ Html.text "Home" ]
+                    , if model.epic.owner == model.session.username then
+                        Html.button
+                            [ HtmlA.class "blue"
+                            , HtmlE.onClick UserCreateNewStory
+                            ]
+                            [ Html.text "New Story" ]
+
+                      else
+                        Html.text ""
                     , logoutForm model.session.csrfToken model.session.logoutUrl
                     ]
                 , case model.error of

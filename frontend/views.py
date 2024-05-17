@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.views.decorators.cache import cache_control
 
 from epics.models import Epic, UserStory
+from epics.exceptions import BadCommand
 
 from . import forms
 
@@ -104,6 +105,31 @@ def new_epic(request):
 
 @login_required
 @cache_control(no_cache=True, must_revalidate=True, no_store=True)
+def new_story(request, epic_id):
+    context = {}
+    if request.method == "POST":
+        form = forms.UserStoryForm(request.POST)
+        if form.is_valid():
+            epic = Epic.objects.get(pk=epic_id)
+            print(epic)
+            try:
+                us = request.user.contributor.new_story(
+                    epic, **form.cleaned_data)
+                return redirect(reverse('frontend:story-detail', args=[us.pk]))
+            except BadCommand as e:
+                context["domain_error"] = "it's not your epic"
+    else:
+        form = forms.UserStoryForm()
+    context['form'] = form
+    return render(
+        request,
+        "new-story.html",
+        context=context,
+    )
+
+
+@login_required
+@cache_control(no_cache=True, must_revalidate=True, no_store=True)
 @with_logout
 @with_csrf
 @with_username
@@ -122,6 +148,7 @@ def epic_view(request, epic_id, *, context):
         raise Http404("Epic does not exist")
     context["epic_id"] = epic_id
     context["to_model"]["epic"] = {
+        "id": epic_id,
         "title": epic.title,
         "pubDate": epic.pub_date.isoformat(),
         "description": epic.description,

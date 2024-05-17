@@ -1,0 +1,9 @@
+<div class="space">
+  <form  class="container form-container" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" class="green" formenctype="multipart/form-data">
+      Submit
+    </button>
+  </form>
+</div>

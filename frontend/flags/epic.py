@@ -23,6 +23,7 @@ EpicFlags = Flags(
         {
             "epic": ObjectFlag(
                 {
+                    "id": IntFlag(),
                     "title": StringFlag(),
                     "pubDate": StringFlag(),
                     "description": StringFlag(),

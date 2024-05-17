@@ -4,7 +4,7 @@
 {% endblock %}
 {% block content %}
 <header class="page-element">
-  <h1>New epic</h1>
+  <h1>New Story</h1>
 </header>
 <main>
   <div class="head-container toolbar container">
@@ -14,6 +14,11 @@
       <button type="submit" class="red">Log out</button>
     </form>
   </div>
+  {% if domain_error %}
+  <div class="error-msg">
+    {{ domain_error }}
+  </div>
+  {% endif %}
   {% include "form.html" with form=form %}
 </main>
 {% endblock %}
