@@ -1,0 +1,5 @@
+- [ ] epic creation form
+- [ ] story creation form
+- [ ] epic modification form
+- [ ] story modification form 
+- [ ] move static parts in template
