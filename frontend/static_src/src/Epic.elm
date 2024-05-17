@@ -545,6 +545,7 @@ storyItem username isOwner story =
         viewButton =
             ctrlButton
                 (UserSelectStory story)
+                []
                 [ Html.text "🔍" ]
 
         controlButtons =

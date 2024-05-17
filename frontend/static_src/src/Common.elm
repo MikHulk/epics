@@ -52,42 +52,51 @@ logoutForm csrfToken logoutUrl =
         ]
 
 
-ctrlButton : msg -> List (Html.Html msg) -> Html.Html msg
-ctrlButton msg content =
+ctrlButton :
+    msg
+    -> List (Html.Attribute msg)
+    -> List (Html.Html msg)
+    -> Html.Html msg
+ctrlButton msg attrs content =
     Html.div
-        [ HtmlA.class "blue"
-        , HtmlA.style "font-size" "1.2em"
-        , HtmlA.style "height" "1em"
-        , HtmlA.style "margin-top" "-0.1em"
-        , HtmlA.style "cursor" "pointer"
-        , HtmlE.onClick msg
-        ]
+        ([ HtmlA.class "blue"
+         , HtmlA.style "font-size" "1.2em"
+         , HtmlA.style "height" "1em"
+         , HtmlA.style "margin-top" "-0.1em"
+         , HtmlA.style "cursor" "pointer"
+         , HtmlE.onClick msg
+         ]
+            ++ attrs
+        )
         content
 
 
 takeButton : (StoryAction -> msg) -> Html.Html msg
 takeButton fmsg =
-    ctrlButton (fmsg Take) [ Html.text "⛏" ]
+    ctrlButton
+        (fmsg Take)
+        [ HtmlA.style "margin-top" "-0.18em" ]
+        [ Html.text "⛏" ]
 
 
 suspendButton : (StoryAction -> msg) -> Html.Html msg
 suspendButton fmsg =
-    ctrlButton (fmsg Suspend) [ Html.text "✋" ]
+    ctrlButton (fmsg Suspend) [] [ Html.text "✋" ]
 
 
 resumeButton : (StoryAction -> msg) -> Html.Html msg
 resumeButton fmsg =
-    ctrlButton (fmsg Resume) [ Html.text "✨" ]
+    ctrlButton (fmsg Resume) [] [ Html.text "✨" ]
 
 
 cancelButton : (StoryAction -> msg) -> Html.Html msg
 cancelButton fmsg =
-    ctrlButton (fmsg Cancel) [ Html.text "❌" ]
+    ctrlButton (fmsg Cancel) [] [ Html.text "❌" ]
 
 
 validateButton : (StoryAction -> msg) -> Html.Html msg
 validateButton fmsg =
-    ctrlButton (fmsg Validate) [ Html.text "✅" ]
+    ctrlButton (fmsg Validate) [] [ Html.text "✅" ]
 
 
 
